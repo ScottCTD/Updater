@@ -1,0 +1,3 @@
+C:/Scott/Code/Updater/UpdaterClient/cmake-build-debug/CMakeFiles/UpdaterClient.dir
+C:/Scott/Code/Updater/UpdaterClient/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Scott/Code/Updater/UpdaterClient/cmake-build-debug/CMakeFiles/rebuild_cache.dir

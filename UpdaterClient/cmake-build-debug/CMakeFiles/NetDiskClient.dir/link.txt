@@ -1,0 +1,3 @@
+"C:\Software\Jetbrains\CLion 2021.1.2\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\NetDiskClient.dir/objects.a
+C:\Software\mingw64\bin\ar.exe cr CMakeFiles\NetDiskClient.dir/objects.a @CMakeFiles\NetDiskClient.dir\objects1.rsp
+C:\Software\mingw64\bin\gcc.exe -g -Wl,--whole-archive CMakeFiles\NetDiskClient.dir/objects.a -Wl,--no-whole-archive -o build\NetDiskClient.exe -Wl,--out-implib,libNetDiskClient.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\NetDiskClient.dir\linklibs.rsp

@@ -1,0 +1,1 @@
+/usr/bin/gcc -g   CMakeFiles/NetDiskServer.dir/src/cJSON.c.o CMakeFiles/NetDiskServer.dir/src/ArrayList.c.o CMakeFiles/NetDiskServer.dir/src/Main.c.o  -o build/NetDiskServer  -lpthread 

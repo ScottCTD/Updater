@@ -1,0 +1,3 @@
+"C:\Software\Jetbrains\CLion 2021.1.2\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\UpdaterClient.dir/objects.a
+C:\Software\mingw64\bin\ar.exe cr CMakeFiles\UpdaterClient.dir/objects.a @CMakeFiles\UpdaterClient.dir\objects1.rsp
+C:\Software\mingw64\bin\gcc.exe -g -Wl,--whole-archive CMakeFiles\UpdaterClient.dir/objects.a -Wl,--no-whole-archive -o build\UpdaterClient.exe -Wl,--out-implib,libUpdaterClient.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\UpdaterClient.dir\linklibs.rsp
