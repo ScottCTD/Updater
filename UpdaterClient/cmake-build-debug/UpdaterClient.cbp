@@ -74,6 +74,12 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="C:/Scott/Code/Updater/UpdaterClient/src/ArrayList.c">
+			<Option target="UpdaterClient"/>
+		</Unit>
+		<Unit filename="C:/Scott/Code/Updater/UpdaterClient/src/ArrayList.h">
+			<Option target="UpdaterClient"/>
+		</Unit>
 		<Unit filename="C:/Scott/Code/Updater/UpdaterClient/src/Main.c">
 			<Option target="UpdaterClient"/>
 		</Unit>

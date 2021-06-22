@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/UpdaterServer.dir/src/ArrayList.c.o"
+  "CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o"
   "CMakeFiles/UpdaterServer.dir/src/Main.c.o"
   "CMakeFiles/UpdaterServer.dir/src/cJSON.c.o"
   "build/UpdaterServer"

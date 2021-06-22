@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj"
   "CMakeFiles/UpdaterClient.dir/src/Main.c.obj"
   "CMakeFiles/UpdaterClient.dir/src/cJSON.c.obj"
   "build/UpdaterClient.exe"

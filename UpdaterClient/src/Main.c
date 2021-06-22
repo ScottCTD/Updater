@@ -6,6 +6,7 @@
 
 #include "cJSON.h"
 #include "dirent.h"
+#include "ArrayList.h"
 
 #define SERVER_IP "127.0.0.1"
 #define PORT (30001)
@@ -16,6 +17,7 @@
 #define SYNC_MODE_SOFT (2)
 
 int syncMode = SYNC_MODE_HARD;
+char *executableName = NULL;
 SOCKET serverSocket = INVALID_SOCKET;
 cJSON *clientJson = NULL;
 
@@ -32,47 +34,29 @@ void generateUniqueFileIdentifier(const char *path, const char *fileName, cJSON 
     fclose(file);
     cJSON_AddStringToObject(jsonObject, "Identifier", buffer);
 }
-void scanResources(DIR *directory, const char *path, cJSON *jsonArray) {
-    static char buffer[256];
-    char *executableName;
-    if (buffer[0] == 0) {
-        GetModuleFileName(NULL, buffer, 256);
-        executableName = strrchr(buffer, '\\') + 1;
-    }
-    struct dirent *dirEntry;
-    while ((dirEntry = readdir(directory)) != NULL) {
-        if (strcmp(".", dirEntry->d_name) == 0 ||
-            strcmp("..", dirEntry->d_name) == 0 ||
-            strcmp(executableName, dirEntry->d_name) == 0) {
+void scanDirectory(char *targetDirPath, char *path, cJSON *clientDirArrayJson, cJSON *clientFileArrayJson) {
+    DIR *dir = opendir(targetDirPath);
+    dirent *entry = NULL;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(".", entry->d_name) == 0 ||
+            strcmp("..", entry->d_name) == 0 ||
+            strcmp(executableName, entry->d_name) == 0) {
             continue;
         }
-        char temp[BUFFER_SIZE];
-        strcpy(temp, path);
-        strcat(temp, "/");
-        strcat(temp, dirEntry->d_name);
-        if (dirEntry->d_type == DT_DIR) {
-            DIR *subDir = opendir(temp);
-            scanResources(subDir, temp, jsonArray);
-        } else if (dirEntry->d_type == DT_REG) {
+        char buffer[256];
+        strcpy(buffer, path);
+        strcat(buffer, "/");
+        strcat(buffer, entry->d_name);
+        if (entry->d_type == DT_DIR) {
+            cJSON_AddItemToArray(clientDirArrayJson, cJSON_CreateString(buffer));
+            scanDirectory(buffer, buffer, clientDirArrayJson, clientFileArrayJson);
+        } else if (entry->d_type == DT_REG) {
             cJSON *jsonObject = cJSON_CreateObject();
-            cJSON_AddStringToObject(jsonObject, "Path", temp);
-            generateUniqueFileIdentifier(temp, dirEntry->d_name, jsonObject);
-            cJSON_AddItemToArray(jsonArray, jsonObject);
+            cJSON_AddStringToObject(jsonObject, "Path", buffer);
+            generateUniqueFileIdentifier(buffer, entry->d_name, jsonObject);
+            cJSON_AddItemToArray(clientFileArrayJson, jsonObject);
         }
     }
-}
-void initResources() {
-    printf("Processing Data...\n");
-    clientJson = cJSON_CreateObject();
-    int value;
-    DIR *resourceDir = opendir(".");
-    if (resourceDir == NULL) {
-        printf("Failed to create resource folder, code: %d\n", value);
-        exit(-1);
-    }
-    cJSON *json = cJSON_AddArrayToObject(clientJson, "Resources");
-    scanResources(resourceDir, ".", json);
-    printf("%s\n", cJSON_Print(clientJson));
 }
 
 int initSocket() {
@@ -155,22 +139,13 @@ void stop() {
     WSACleanup();
 }
 
-bool searchInJsonArray(cJSON *fileIdentifier, cJSON *fileList) {
-    cJSON *temp = NULL;
-    cJSON_ArrayForEach(temp, fileList) {
-        cJSON *identifier = cJSON_GetObjectItemCaseSensitive(temp, "Identifier");
-        if (cJSON_IsString(identifier)) {
-            if (strcmp(identifier->valuestring, fileIdentifier->valuestring) == 0) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 int main() {
+    printf("%d\n", isSubDirectory("test/", "test/testDir/a"));
+    char buffer[256];
+    GetModuleFileName(NULL, buffer, 256);
+    executableName = strrchr(buffer, '\\') + 1;
+
     int result;
-    initResources();
     if ((result = initSocket()) != 0) {
         return result;
     }
@@ -188,7 +163,7 @@ int main() {
     } else if (strcmp("SOFT", mode->valuestring) == 0) {
         syncMode = SYNC_MODE_SOFT;
     }
-    printf("%d\n", syncMode);
+    printf("Sync Mode = %d\n", syncMode);
 
     sendString("list");
     printf("Listing server files!\n");
@@ -196,19 +171,41 @@ int main() {
     char *serverJsonString = recvString(size);
     printf("%s\n", serverJsonString);
 
-    printf("Processing Data!\n");
+    printf("Processing Data\n");
     cJSON *serverJson = cJSON_Parse(serverJsonString);
-    cJSON *serverResources = cJSON_GetObjectItemCaseSensitive(serverJson, "Resources");
-    cJSON *clientResources = cJSON_GetObjectItemCaseSensitive(clientJson, "Resources");
-    cJSON *serverFile;
-    cJSON_ArrayForEach(serverFile, serverResources) {
-        cJSON *identifier = cJSON_GetObjectItemCaseSensitive(serverFile, "Identifier");
-        if (!searchInJsonArray(identifier, clientResources)) {
-            printf("%s\n", identifier->valuestring);
+    cJSON *serverDirJson = cJSON_GetObjectItemCaseSensitive(serverJson, "Directories");
+    cJSON *serverDirElement = NULL;
+    // Store pointers point to server dir strings.
+    ArrayList *serverDirs = arrayListNew(sizeof(char **));
+    // Add server paths to the arraylist and create missing dirs
+    cJSON_ArrayForEach(serverDirElement, serverDirJson) {
+        char *path = serverDirElement->valuestring;
+        arrayListAdd(serverDirs, &path);
+        if (opendir(path) == NULL) {
+            mkdir(path);
         }
     }
+    clientJson = cJSON_CreateObject();
+    cJSON *clientDirArrayJson = cJSON_AddArrayToObject(clientJson, "Directories");
+    cJSON *clientFileArrayJson = cJSON_AddArrayToObject(clientJson, "Files");
 
+    switch (syncMode) {
+        case SYNC_MODE_ALL:
+            break;
+        case SYNC_MODE_HARD:
+
+            break;
+        case SYNC_MODE_SOFT:
+            break;
+        default:
+            break;
+    }
+
+    // Deallocate memory
+    free(serverConfigString);
     free(serverJsonString);
+    cJSON_Delete(serverJson);
+    arrayListDelete(serverDirs);
     stop();
     return 0;
 }

@@ -150,6 +150,33 @@ src/ArrayList.c.s:
 	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/ArrayList.c.s
 .PHONY : src/ArrayList.c.s
 
+src/FileSystem.o: src/FileSystem.c.o
+
+.PHONY : src/FileSystem.o
+
+# target to build an object file
+src/FileSystem.c.o:
+	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o
+.PHONY : src/FileSystem.c.o
+
+src/FileSystem.i: src/FileSystem.c.i
+
+.PHONY : src/FileSystem.i
+
+# target to preprocess a source file
+src/FileSystem.c.i:
+	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/FileSystem.c.i
+.PHONY : src/FileSystem.c.i
+
+src/FileSystem.s: src/FileSystem.c.s
+
+.PHONY : src/FileSystem.s
+
+# target to generate assembly for a file
+src/FileSystem.c.s:
+	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/FileSystem.c.s
+.PHONY : src/FileSystem.c.s
+
 src/Main.o: src/Main.c.o
 
 .PHONY : src/Main.o
@@ -216,6 +243,9 @@ help:
 	@echo "... src/ArrayList.o"
 	@echo "... src/ArrayList.i"
 	@echo "... src/ArrayList.s"
+	@echo "... src/FileSystem.o"
+	@echo "... src/FileSystem.i"
+	@echo "... src/FileSystem.s"
 	@echo "... src/Main.o"
 	@echo "... src/Main.i"
 	@echo "... src/Main.s"

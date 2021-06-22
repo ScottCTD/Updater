@@ -4,7 +4,12 @@
 CMakeFiles/UpdaterServer.dir/src/ArrayList.c.o
  /mnt/c/Scott/Code/Updater/UpdaterServer/src/ArrayList.c
  /mnt/c/Scott/Code/Updater/UpdaterServer/src/ArrayList.h
+CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o
+ /mnt/c/Scott/Code/Updater/UpdaterServer/src/FileSystem.c
+ /mnt/c/Scott/Code/Updater/UpdaterServer/src/FileSystem.h
+ /mnt/c/Scott/Code/Updater/UpdaterServer/src/cJSON.h
 CMakeFiles/UpdaterServer.dir/src/Main.c.o
+ /mnt/c/Scott/Code/Updater/UpdaterServer/src/FileSystem.h
  /mnt/c/Scott/Code/Updater/UpdaterServer/src/Main.c
  /mnt/c/Scott/Code/Updater/UpdaterServer/src/cJSON.h
 CMakeFiles/UpdaterServer.dir/src/cJSON.c.o

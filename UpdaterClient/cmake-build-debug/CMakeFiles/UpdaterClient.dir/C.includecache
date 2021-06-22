@@ -6,6 +6,16 @@
 
 #IncludeRegexTransform: 
 
+C:/Scott/Code/Updater/UpdaterClient/src/ArrayList.h
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+stdbool.h
+-
+
 C:/Scott/Code/Updater/UpdaterClient/src/Main.c
 stdio.h
 -
@@ -21,6 +31,8 @@ cJSON.h
 C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
 dirent.h
 C:/Scott/Code/Updater/UpdaterClient/src/dirent.h
+ArrayList.h
+C:/Scott/Code/Updater/UpdaterClient/src/ArrayList.h
 
 C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
 stddef.h

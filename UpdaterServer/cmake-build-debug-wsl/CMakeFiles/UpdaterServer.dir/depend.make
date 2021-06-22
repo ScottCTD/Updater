@@ -4,6 +4,11 @@
 CMakeFiles/UpdaterServer.dir/src/ArrayList.c.o: ../src/ArrayList.c
 CMakeFiles/UpdaterServer.dir/src/ArrayList.c.o: ../src/ArrayList.h
 
+CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o: ../src/FileSystem.c
+CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o: ../src/FileSystem.h
+CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o: ../src/cJSON.h
+
+CMakeFiles/UpdaterServer.dir/src/Main.c.o: ../src/FileSystem.h
 CMakeFiles/UpdaterServer.dir/src/Main.c.o: ../src/Main.c
 CMakeFiles/UpdaterServer.dir/src/Main.c.o: ../src/cJSON.h
 

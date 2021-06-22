@@ -6,8 +6,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY build/)
 
 add_executable(UpdaterClient
         src/dirent.h
-        src/cJSON.h
-        src/cJSON.c
+        src/cJSON.h src/cJSON.c
+        src/ArrayList.h src/ArrayList.c
         src/Main.c
 )
 

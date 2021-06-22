@@ -141,6 +141,33 @@ UpdaterClient/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/build
 .PHONY : UpdaterClient/fast
 
+src/ArrayList.obj: src/ArrayList.c.obj
+
+.PHONY : src/ArrayList.obj
+
+# target to build an object file
+src/ArrayList.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj
+.PHONY : src/ArrayList.c.obj
+
+src/ArrayList.i: src/ArrayList.c.i
+
+.PHONY : src/ArrayList.i
+
+# target to preprocess a source file
+src/ArrayList.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/ArrayList.c.i
+.PHONY : src/ArrayList.c.i
+
+src/ArrayList.s: src/ArrayList.c.s
+
+.PHONY : src/ArrayList.s
+
+# target to generate assembly for a file
+src/ArrayList.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/ArrayList.c.s
+.PHONY : src/ArrayList.c.s
+
 src/Main.obj: src/Main.c.obj
 
 .PHONY : src/Main.obj
@@ -204,6 +231,9 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... UpdaterClient
+	@echo ... src/ArrayList.obj
+	@echo ... src/ArrayList.i
+	@echo ... src/ArrayList.s
 	@echo ... src/Main.obj
 	@echo ... src/Main.i
 	@echo ... src/Main.s

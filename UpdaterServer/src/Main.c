@@ -12,6 +12,7 @@
 #include <dirent.h>
 
 #include "cJSON.h"
+#include "FileSystem.h"
 
 #define PORT (30001)
 #define BACKLOG (20)
@@ -58,61 +59,67 @@ void initConfig() {
     }
 }
 
-void generateUniqueFileIdentifier(const char *path, const char *fileName, cJSON *jsonObject) {
-    FILE *file = fopen(path, "rb");
-    if (file == NULL) {
-        printf("Failed to open file %s\n", path);
-        return;
-    }
-    fseek(file, 0, SEEK_END);
-    char buffer[BUFFER_SIZE];
-    // Name Size
-    sprintf(buffer, "%s%ld", fileName, ftell(file));
-    fclose(file);
-    cJSON_AddStringToObject(jsonObject, "Identifier", buffer);
-}
-void scanResources(DIR *directory, const char *path, cJSON *jsonArray, cJSON *directoriesArray) {
-    struct dirent *dirEntry;
-    while ((dirEntry = readdir(directory)) != NULL) {
-        if (strcmp(".", dirEntry->d_name) == 0 || strcmp("..", dirEntry->d_name) == 0) {
+void scanDirectory(File *directory, cJSON *directoriesArray, cJSON *filesArray) {
+    DIR *dir = opendir(directory->path);
+    struct dirent *entry = NULL;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(".", entry->d_name) == 0 ||
+            strcmp("..", entry->d_name) == 0) {
             continue;
         }
-        char temp[BUFFER_SIZE];
-        strcpy(temp, path);
-        strcat(temp, "/");
-        strcat(temp, dirEntry->d_name);
-        if (dirEntry->d_type == DT_DIR) {
-            cJSON_AddItemToArray(directoriesArray, cJSON_CreateString(temp + 10));
-            DIR *subDir = opendir(temp);
-            scanResources(subDir, temp, jsonArray, directoriesArray);
-        } else if (dirEntry->d_type == DT_REG) {
-            cJSON *jsonObject = cJSON_CreateObject();
-            cJSON_AddStringToObject(jsonObject, "Path", temp);
-            generateUniqueFileIdentifier(temp, dirEntry->d_name, jsonObject);
-            cJSON_AddItemToArray(jsonArray, jsonObject);
+        char path[BUFFER_SIZE];
+        memset(path, 0, BUFFER_SIZE);
+        strcat(path, directory->path);
+        strcat(path, "/");
+        strcat(path, entry->d_name);
+        File *file = newFile(path);
+        if (file->isDirectory) {
+            cJSON_AddItemToArray(directoriesArray, cJSON_CreateString(file->path));
+            scanDirectory(file, directoriesArray, filesArray);
+        } else {
+            cJSON_AddItemToArray(filesArray, fileToJson(file));
         }
+        freeFile(file);
     }
 }
-void initResources() {
-    printf("Processing Data...\n");
+void initData() {
     serverJson = cJSON_CreateObject();
+    cJSON *serverRootDirectories = cJSON_AddArrayToObject(serverJson, "Root Directories");
     cJSON *serverDirectories = cJSON_AddArrayToObject(serverJson, "Directories");
-    int value;
+    cJSON *serverFiles = cJSON_AddArrayToObject(serverJson, "Files");
+    // Record root directories
     DIR *resourceDir = opendir(RESOURCE_FOLDER);
+    int value;
     if (resourceDir == NULL) {
         if ((value = mkdir(RESOURCE_FOLDER, S_IRWXU)) != 0) {
             printf("Failed to create resource folder, code: %d\n", value);
+            exit(-1);
         }
     }
-    cJSON *json = cJSON_AddArrayToObject(serverJson, "Resources");
-    scanResources(resourceDir, RESOURCE_FOLDER, json, serverDirectories);
-
-    char *temp = cJSON_Print(serverJson);
-    printf("%s %lu\n", temp, strlen(temp));
+    struct dirent *entry = NULL;
+    while ((entry = readdir(resourceDir)) != NULL) {
+        if (strcmp(".", entry->d_name) == 0 ||
+            strcmp("..", entry->d_name) == 0) {
+            continue;
+        }
+        char buffer[BUFFER_SIZE];
+        memset(buffer, 0, BUFFER_SIZE);
+        strcat(buffer, RESOURCE_FOLDER);
+        strcat(buffer, "/");
+        strcat(buffer, entry->d_name);
+        File *file = newFile(buffer);
+        if (file->isDirectory) {
+            cJSON_AddItemToArray(serverRootDirectories, cJSON_CreateString(file->path));
+            scanDirectory(file, serverDirectories, serverFiles);
+        } else {
+            cJSON_AddItemToArray(serverFiles, fileToJson(file));
+        }
+        freeFile(file);
+    }
+    printf("%s\n", cJSON_Print(serverJson));
 }
 
 int initSocket() {
-    printf("Server is starting!\n");
     int value;
     // Get our host address info.
     struct addrinfo hints, *serverInfo;
@@ -209,7 +216,7 @@ int asynHandleInput(void *arg) {
         if (strcmp("update", buffer) == 0) {
             cJSON_Delete(serverJson);
             serverJson = cJSON_CreateObject();
-            initResources(serverJson);
+            initData(serverJson);
         }
     }
 }
@@ -248,8 +255,9 @@ int asynHandleClient(void *arg) {
 }
 
 int main() {
+    printf("Starting Server...\n");
     initConfig();
-    initResources();
+    initData();
     int result;
     if ((result = initSocket()) != 0) {
         return result;

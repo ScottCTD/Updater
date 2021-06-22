@@ -82,6 +82,12 @@
 		<Unit filename="/mnt/c/Scott/Code/Updater/UpdaterServer/src/ArrayList.h">
 			<Option target="UpdaterServer"/>
 		</Unit>
+		<Unit filename="/mnt/c/Scott/Code/Updater/UpdaterServer/src/FileSystem.c">
+			<Option target="UpdaterServer"/>
+		</Unit>
+		<Unit filename="/mnt/c/Scott/Code/Updater/UpdaterServer/src/FileSystem.h">
+			<Option target="UpdaterServer"/>
+		</Unit>
 		<Unit filename="/mnt/c/Scott/Code/Updater/UpdaterServer/src/Main.c">
 			<Option target="UpdaterServer"/>
 		</Unit>
