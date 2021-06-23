@@ -7,9 +7,10 @@
 #include "cJSON.h"
 #include "dirent.h"
 #include "ArrayList.h"
+#include "FileSystem.h"
 
 #define SERVER_IP "127.0.0.1"
-#define PORT (30001)
+#define PORT (30000)
 #define BUFFER_SIZE (8192)
 
 #define SYNC_MODE_ALL (0)
@@ -21,41 +22,50 @@ char *executableName = NULL;
 SOCKET serverSocket = INVALID_SOCKET;
 cJSON *clientJson = NULL;
 
-void generateUniqueFileIdentifier(const char *path, const char *fileName, cJSON *jsonObject) {
-    FILE *file = fopen(path, "rb");
-    if (file == NULL) {
-        printf("Failed to open file %s\n", path);
-        return;
-    }
-    fseek(file, 0, SEEK_END);
-    char buffer[BUFFER_SIZE];
-    // Name Size
-    sprintf(buffer, "%s%ld", fileName, ftell(file));
-    fclose(file);
-    cJSON_AddStringToObject(jsonObject, "Identifier", buffer);
-}
-void scanDirectory(char *targetDirPath, char *path, cJSON *clientDirArrayJson, cJSON *clientFileArrayJson) {
-    DIR *dir = opendir(targetDirPath);
-    dirent *entry = NULL;
+void deleteDirectory(char *pathToDir) {
+    DIR *dir = opendir(pathToDir);
+    struct dirent *entry = NULL;
     while ((entry = readdir(dir)) != NULL) {
         if (strcmp(".", entry->d_name) == 0 ||
             strcmp("..", entry->d_name) == 0 ||
             strcmp(executableName, entry->d_name) == 0) {
             continue;
         }
-        char buffer[256];
-        strcpy(buffer, path);
-        strcat(buffer, "/");
-        strcat(buffer, entry->d_name);
+        char path[BUFFER_SIZE];
+        strcat(path, pathToDir);
+        strcat(path, "/");
+        strcat(path, entry->d_name);
         if (entry->d_type == DT_DIR) {
-            cJSON_AddItemToArray(clientDirArrayJson, cJSON_CreateString(buffer));
-            scanDirectory(buffer, buffer, clientDirArrayJson, clientFileArrayJson);
+            deleteDirectory(path);
         } else if (entry->d_type == DT_REG) {
-            cJSON *jsonObject = cJSON_CreateObject();
-            cJSON_AddStringToObject(jsonObject, "Path", buffer);
-            generateUniqueFileIdentifier(buffer, entry->d_name, jsonObject);
-            cJSON_AddItemToArray(clientFileArrayJson, jsonObject);
+            unlink(path);
         }
+    }
+    rmdir(pathToDir);
+}
+
+void scanDirectory(File *directory, cJSON *clientDirArrayJson, cJSON *clientFileArrayJson) {
+    DIR *dir = opendir(directory->path);
+    struct dirent *entry = NULL;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(".", entry->d_name) == 0 ||
+            strcmp("..", entry->d_name) == 0 ||
+            strcmp(executableName, entry->d_name) == 0) {
+            continue;
+        }
+        char path[BUFFER_SIZE];
+        memset(path, 0, 256);
+        strcat(path, directory->path);
+        strcat(path, "/");
+        strcat(path, entry->d_name);
+        File *file = newFile(path);
+        if (file->isDirectory) {
+            cJSON_AddItemToArray(clientDirArrayJson, cJSON_CreateString(file->path));
+            scanDirectory(file, clientDirArrayJson, clientFileArrayJson);
+        } else {
+            cJSON_AddItemToArray(clientFileArrayJson, fileToJson(file));
+        }
+        freeFile(file);
     }
 }
 
@@ -110,6 +120,11 @@ int sendString(char *string) {
     return send(serverSocket, string, (int) strlen(string), 0);
 }
 
+bool recvBoolean() {
+    bool boolean;
+    recv(serverSocket, (char *) &boolean, 1, 0);
+    return boolean;
+}
 char *recvString(size_t totalSize) {
     char buffer[BUFFER_SIZE];
     size_t bytes, total = 0;
@@ -131,6 +146,20 @@ size_t recvSize() {
     recv(serverSocket, (char *) &size, sizeof(size_t), 0);
     return size;
 }
+void recvFile(char *serverFilePath) {
+    sendString("download");
+    if (recvBoolean()) {
+        sendString(serverFilePath);
+        char buffer[BUFFER_SIZE];
+        size_t size = recvSize();
+        size_t bytes, total = 0;
+        FILE *file = fopen(serverFilePath + 10, "wb");
+        while (total < size && (bytes = recv(serverSocket, buffer, BUFFER_SIZE, 0)) > 0) {
+            fwrite(buffer, 1, bytes, file);
+            total += bytes;
+        }
+    }
+}
 
 void stop() {
     sendString("stop");
@@ -140,7 +169,6 @@ void stop() {
 }
 
 int main() {
-    printf("%d\n", isSubDirectory("test/", "test/testDir/a"));
     char buffer[256];
     GetModuleFileName(NULL, buffer, 256);
     executableName = strrchr(buffer, '\\') + 1;
@@ -174,38 +202,91 @@ int main() {
     printf("Processing Data\n");
     cJSON *serverJson = cJSON_Parse(serverJsonString);
     cJSON *serverDirJson = cJSON_GetObjectItemCaseSensitive(serverJson, "Directories");
-    cJSON *serverDirElement = NULL;
-    // Store pointers point to server dir strings.
-    ArrayList *serverDirs = arrayListNew(sizeof(char **));
-    // Add server paths to the arraylist and create missing dirs
-    cJSON_ArrayForEach(serverDirElement, serverDirJson) {
-        char *path = serverDirElement->valuestring;
-        arrayListAdd(serverDirs, &path);
+    cJSON *serverRootDirJson = cJSON_GetObjectItemCaseSensitive(serverJson, "Root Directories");
+    cJSON *serverTempJson = NULL;
+    // Create missing dirs
+    cJSON_ArrayForEach(serverTempJson, serverRootDirJson) {
+        char *path = serverTempJson->valuestring + 10;
         if (opendir(path) == NULL) {
             mkdir(path);
         }
     }
+    cJSON_ArrayForEach(serverTempJson, serverDirJson) {
+        char *path = serverTempJson->valuestring + 10;
+        if (opendir(path) == NULL) {
+            mkdir(path);
+        }
+    }
+    // Scan client files based on different sync modes.
     clientJson = cJSON_CreateObject();
     cJSON *clientDirArrayJson = cJSON_AddArrayToObject(clientJson, "Directories");
     cJSON *clientFileArrayJson = cJSON_AddArrayToObject(clientJson, "Files");
-
-    switch (syncMode) {
-        case SYNC_MODE_ALL:
-            break;
-        case SYNC_MODE_HARD:
-
-            break;
-        case SYNC_MODE_SOFT:
-            break;
-        default:
-            break;
+    if (syncMode == SYNC_MODE_ALL) {
+        File *file = newFile(".");
+        scanDirectory(file, clientDirArrayJson, clientFileArrayJson);
+        freeFile(file);
+    } else {
+        cJSON_ArrayForEach(serverTempJson, serverRootDirJson) {
+            File *file = newFile(serverTempJson->valuestring + 10);
+            scanDirectory(file, clientDirArrayJson, clientFileArrayJson);
+            freeFile(file);
+        }
+    }
+    printf("%s\n", cJSON_Print(clientJson));
+    // Download missing files
+    cJSON *clientTempJson = NULL;
+    cJSON *serverfilesJson = cJSON_GetObjectItemCaseSensitive(serverJson, "Files");
+    cJSON_ArrayForEach(serverTempJson, serverfilesJson) {
+        char *serverIdentifier = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Identifier"));
+        bool isClientHasFile = false;
+        cJSON_ArrayForEach(clientTempJson, clientFileArrayJson) {
+            char *clientIdentifier = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(clientTempJson, "Identifier"));
+            if (strcmp(serverIdentifier, clientIdentifier) == 0) {
+                isClientHasFile = true;
+                break;
+            }
+        }
+        if (!isClientHasFile) {
+            char *serverFilePath = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Path"));
+            recvFile(serverFilePath);
+        }
+    }
+    printf("%s\n", cJSON_Print(clientJson));
+    // Delete other dirs
+    cJSON_ArrayForEach(clientTempJson, clientDirArrayJson) {
+        char *clientDirPath = cJSON_GetStringValue(clientTempJson);
+        bool isServerHasDir = false;
+        cJSON_ArrayForEach(serverTempJson, serverDirJson) {
+            char *serverDirPath = cJSON_GetStringValue(serverTempJson) + 10;
+            if (strcmp(clientDirPath, serverDirPath) == 0) {
+                isServerHasDir = true;
+                continue;
+            }
+        }
+        if (!isServerHasDir) {
+            deleteDirectory(clientDirPath);
+        }
+    }
+    // Delete other files
+    cJSON_ArrayForEach(clientTempJson, clientFileArrayJson) {
+        char *clientFilePath = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(clientTempJson, "Path"));
+        bool isServerHasFile = false;
+        cJSON_ArrayForEach(serverTempJson, serverfilesJson) {
+            char *serverFilePath = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Path")) + 10;
+            if (strcmp(clientFilePath, serverFilePath) == 0) {
+                isServerHasFile = true;
+                continue;
+            }
+        }
+        if (!isServerHasFile) {
+            unlink(clientFilePath);
+        }
     }
 
     // Deallocate memory
     free(serverConfigString);
     free(serverJsonString);
     cJSON_Delete(serverJson);
-    arrayListDelete(serverDirs);
     stop();
     return 0;
 }

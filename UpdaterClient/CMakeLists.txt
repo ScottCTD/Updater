@@ -8,6 +8,7 @@ add_executable(UpdaterClient
         src/dirent.h
         src/cJSON.h src/cJSON.c
         src/ArrayList.h src/ArrayList.c
+        src/FileSystem.h src/FileSystem.c
         src/Main.c
 )
 

@@ -16,6 +16,22 @@ string.h
 stdbool.h
 -
 
+C:/Scott/Code/Updater/UpdaterClient/src/FileSystem.h
+stdio.h
+-
+stdbool.h
+-
+stdlib.h
+-
+string.h
+-
+sys/stat.h
+-
+cJSON.h
+C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
+dirent.h
+C:/Scott/Code/Updater/UpdaterClient/src/dirent.h
+
 C:/Scott/Code/Updater/UpdaterClient/src/Main.c
 stdio.h
 -
@@ -33,6 +49,8 @@ dirent.h
 C:/Scott/Code/Updater/UpdaterClient/src/dirent.h
 ArrayList.h
 C:/Scott/Code/Updater/UpdaterClient/src/ArrayList.h
+FileSystem.h
+C:/Scott/Code/Updater/UpdaterClient/src/FileSystem.h
 
 C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
 stddef.h

@@ -4,7 +4,13 @@
 CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj: ../src/ArrayList.c
 CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj: ../src/ArrayList.h
 
+CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj: ../src/FileSystem.c
+CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj: ../src/FileSystem.h
+CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj: ../src/cJSON.h
+CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj: ../src/dirent.h
+
 CMakeFiles/UpdaterClient.dir/src/Main.c.obj: ../src/ArrayList.h
+CMakeFiles/UpdaterClient.dir/src/Main.c.obj: ../src/FileSystem.h
 CMakeFiles/UpdaterClient.dir/src/Main.c.obj: ../src/Main.c
 CMakeFiles/UpdaterClient.dir/src/Main.c.obj: ../src/cJSON.h
 CMakeFiles/UpdaterClient.dir/src/Main.c.obj: ../src/dirent.h

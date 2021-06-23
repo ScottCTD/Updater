@@ -14,7 +14,7 @@
 #include "cJSON.h"
 #include "FileSystem.h"
 
-#define PORT (30001)
+#define PORT (30000)
 #define BACKLOG (20)
 #define BUFFER_SIZE (8192)
 #define RESOURCE_FOLDER "resources"
@@ -33,6 +33,7 @@ void createConfig() {
     cJSON_AddStringToObject(serverConfig, "Mode", "HARD");
 }
 void initConfig() {
+    printf("Initializing config!\n");
     if (access("config.json", F_OK) != 0) {
         FILE *file = fopen("config.json", "wb");
         createConfig();
@@ -42,7 +43,7 @@ void initConfig() {
     }
     FILE *file = fopen("config.json", "rb");
     if (file == NULL) {
-        printf("Failed to read config file Config.json!");
+        printf("Failed to read config file Config.json!\n");
         return;
     }
     char buffer[BUFFER_SIZE];
@@ -57,6 +58,7 @@ void initConfig() {
     } else if (strcmp("SOFT", mode->valuestring) == 0) {
         syncMode = SYNC_MODE_SOFT;
     }
+    printf("%s\n", cJSON_Print(serverConfig));
 }
 
 void scanDirectory(File *directory, cJSON *directoriesArray, cJSON *filesArray) {
@@ -83,6 +85,7 @@ void scanDirectory(File *directory, cJSON *directoriesArray, cJSON *filesArray) 
     }
 }
 void initData() {
+    printf("Initializing server data!\n");
     serverJson = cJSON_CreateObject();
     cJSON *serverRootDirectories = cJSON_AddArrayToObject(serverJson, "Root Directories");
     cJSON *serverDirectories = cJSON_AddArrayToObject(serverJson, "Directories");
@@ -95,6 +98,7 @@ void initData() {
             printf("Failed to create resource folder, code: %d\n", value);
             exit(-1);
         }
+        resourceDir = opendir(RESOURCE_FOLDER);
     }
     struct dirent *entry = NULL;
     while ((entry = readdir(resourceDir)) != NULL) {
@@ -214,9 +218,8 @@ int asynHandleInput(void *arg) {
             stop();
         }
         if (strcmp("update", buffer) == 0) {
-            cJSON_Delete(serverJson);
-            serverJson = cJSON_CreateObject();
-            initData(serverJson);
+            initConfig();
+            initData();
         }
     }
 }
@@ -243,7 +246,22 @@ int asynHandleClient(void *arg) {
             continue;
         }
         if (strcmp("download", buffer) == 0) {
-
+            sendBoolean(clientSocket, true);
+            memset(buffer, 0, BUFFER_SIZE);
+            recvString(clientSocket, buffer, BUFFER_SIZE);
+            File *file = newFile(buffer);
+            sendSize(clientSocket, file->size);
+            FILE *f = fopen(buffer, "rb");
+            size_t bytes;
+            memset(buffer, 0, BUFFER_SIZE);
+            while ((bytes = fread(buffer, 1, BUFFER_SIZE, f)) == BUFFER_SIZE) {
+                send(clientSocket, buffer, bytes, 0);
+            }
+            if (bytes != 0) {
+                send(clientSocket, buffer, bytes, 0);
+            }
+            fclose(f);
+            freeFile(file);
             continue;
         }
         if (strcmp("stop", buffer) == 0) {

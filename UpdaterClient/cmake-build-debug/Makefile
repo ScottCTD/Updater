@@ -168,6 +168,33 @@ src/ArrayList.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/ArrayList.c.s
 .PHONY : src/ArrayList.c.s
 
+src/FileSystem.obj: src/FileSystem.c.obj
+
+.PHONY : src/FileSystem.obj
+
+# target to build an object file
+src/FileSystem.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj
+.PHONY : src/FileSystem.c.obj
+
+src/FileSystem.i: src/FileSystem.c.i
+
+.PHONY : src/FileSystem.i
+
+# target to preprocess a source file
+src/FileSystem.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/FileSystem.c.i
+.PHONY : src/FileSystem.c.i
+
+src/FileSystem.s: src/FileSystem.c.s
+
+.PHONY : src/FileSystem.s
+
+# target to generate assembly for a file
+src/FileSystem.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/FileSystem.c.s
+.PHONY : src/FileSystem.c.s
+
 src/Main.obj: src/Main.c.obj
 
 .PHONY : src/Main.obj
@@ -234,6 +261,9 @@ help:
 	@echo ... src/ArrayList.obj
 	@echo ... src/ArrayList.i
 	@echo ... src/ArrayList.s
+	@echo ... src/FileSystem.obj
+	@echo ... src/FileSystem.i
+	@echo ... src/FileSystem.s
 	@echo ... src/Main.obj
 	@echo ... src/Main.i
 	@echo ... src/Main.s

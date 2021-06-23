@@ -4,8 +4,14 @@
 CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj
  C:/Scott/Code/Updater/UpdaterClient/src/ArrayList.c
  C:/Scott/Code/Updater/UpdaterClient/src/ArrayList.h
+CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj
+ C:/Scott/Code/Updater/UpdaterClient/src/FileSystem.c
+ C:/Scott/Code/Updater/UpdaterClient/src/FileSystem.h
+ C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
+ C:/Scott/Code/Updater/UpdaterClient/src/dirent.h
 CMakeFiles/UpdaterClient.dir/src/Main.c.obj
  C:/Scott/Code/Updater/UpdaterClient/src/ArrayList.h
+ C:/Scott/Code/Updater/UpdaterClient/src/FileSystem.h
  C:/Scott/Code/Updater/UpdaterClient/src/Main.c
  C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
  C:/Scott/Code/Updater/UpdaterClient/src/dirent.h
