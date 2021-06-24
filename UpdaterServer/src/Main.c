@@ -14,23 +14,27 @@
 #include "cJSON.h"
 #include "FileSystem.h"
 
-#define PORT (30000)
+#define PORT (30001)
 #define BACKLOG (20)
 #define BUFFER_SIZE (8192)
 #define RESOURCE_FOLDER "resources"
 
-#define SYNC_MODE_ALL (0)
-#define SYNC_MODE_HARD (1)
-#define SYNC_MODE_SOFT (2)
-
 int serverSocket = 0;
-int syncMode = SYNC_MODE_HARD;
 cJSON *serverConfig = NULL;
 cJSON *serverJson = NULL;
 
+void stop(int status) {
+    cJSON_Delete(serverConfig);
+    cJSON_Delete(serverJson);
+    close(serverSocket);
+    exit(status);
+}
+
 void createConfig() {
     serverConfig = cJSON_CreateObject();
-    cJSON_AddStringToObject(serverConfig, "Mode", "HARD");
+    cJSON *syncFilesArrayJson = cJSON_AddArrayToObject(serverConfig, "Sync Files / Directories");
+    cJSON_AddItemToArray(syncFilesArrayJson, cJSON_CreateString("resources/exampleDir"));
+    cJSON_AddArrayToObject(serverConfig, "Whitelist");
 }
 void initConfig() {
     printf("Initializing config!\n");
@@ -50,18 +54,10 @@ void initConfig() {
     fread(buffer, 1, BUFFER_SIZE, file);
     fclose(file);
     serverConfig = cJSON_Parse(buffer);
-    cJSON *mode = cJSON_GetObjectItemCaseSensitive(serverConfig, "Mode");
-    if (strcmp("ALL", mode->valuestring) == 0) {
-        syncMode = SYNC_MODE_ALL;
-    } else if (strcmp("HARD", mode->valuestring) == 0) {
-        syncMode = SYNC_MODE_HARD;
-    } else if (strcmp("SOFT", mode->valuestring) == 0) {
-        syncMode = SYNC_MODE_SOFT;
-    }
     printf("%s\n", cJSON_Print(serverConfig));
 }
 
-void scanDirectory(File *directory, cJSON *directoriesArray, cJSON *filesArray) {
+void scanDirectory(LocalFile *directory, cJSON *directoriesArray, cJSON *filesArray) {
     DIR *dir = opendir(directory->path);
     struct dirent *entry = NULL;
     while ((entry = readdir(dir)) != NULL) {
@@ -74,51 +70,44 @@ void scanDirectory(File *directory, cJSON *directoriesArray, cJSON *filesArray) 
         strcat(path, directory->path);
         strcat(path, "/");
         strcat(path, entry->d_name);
-        File *file = newFile(path);
+        LocalFile *file = newLocalFile(path);
         if (file->isDirectory) {
             cJSON_AddItemToArray(directoriesArray, cJSON_CreateString(file->path));
             scanDirectory(file, directoriesArray, filesArray);
         } else {
-            cJSON_AddItemToArray(filesArray, fileToJson(file));
+            cJSON_AddItemToArray(filesArray, localFileToJson(file));
         }
-        freeFile(file);
+        freeLocalFile(file);
     }
+    closedir(dir);
 }
 void initData() {
     printf("Initializing server data!\n");
     serverJson = cJSON_CreateObject();
-    cJSON *serverRootDirectories = cJSON_AddArrayToObject(serverJson, "Root Directories");
-    cJSON *serverDirectories = cJSON_AddArrayToObject(serverJson, "Directories");
-    cJSON *serverFiles = cJSON_AddArrayToObject(serverJson, "Files");
-    // Record root directories
-    DIR *resourceDir = opendir(RESOURCE_FOLDER);
+    cJSON *serverDirArrayJson = cJSON_AddArrayToObject(serverJson, "Directories");
+    cJSON *serverFileArrayJson = cJSON_AddArrayToObject(serverJson, "Files");
+    // Create resources folder.
     int value;
-    if (resourceDir == NULL) {
+    if (access(RESOURCE_FOLDER, F_OK) != 0) {
         if ((value = mkdir(RESOURCE_FOLDER, S_IRWXU)) != 0) {
             printf("Failed to create resource folder, code: %d\n", value);
             exit(-1);
         }
-        resourceDir = opendir(RESOURCE_FOLDER);
     }
-    struct dirent *entry = NULL;
-    while ((entry = readdir(resourceDir)) != NULL) {
-        if (strcmp(".", entry->d_name) == 0 ||
-            strcmp("..", entry->d_name) == 0) {
-            continue;
-        }
-        char buffer[BUFFER_SIZE];
-        memset(buffer, 0, BUFFER_SIZE);
-        strcat(buffer, RESOURCE_FOLDER);
-        strcat(buffer, "/");
-        strcat(buffer, entry->d_name);
-        File *file = newFile(buffer);
-        if (file->isDirectory) {
-            cJSON_AddItemToArray(serverRootDirectories, cJSON_CreateString(file->path));
-            scanDirectory(file, serverDirectories, serverFiles);
+    cJSON *temp = NULL;
+    cJSON_ArrayForEach(temp, cJSON_GetObjectItemCaseSensitive(serverConfig, "Sync Files / Directories")) {
+        char *path = cJSON_GetStringValue(temp);
+        LocalFile *file = newLocalFile(path);
+        if (file == NULL) {
+            printf("%s does not exist!\n", path);
+            stop(-1);
         } else {
-            cJSON_AddItemToArray(serverFiles, fileToJson(file));
+            if (file->isDirectory) {
+                scanDirectory(file, serverDirArrayJson, serverFileArrayJson);
+            } else {
+                cJSON_AddItemToArray(serverFileArrayJson, localFileToJson(file));
+            }
         }
-        freeFile(file);
     }
     printf("%s\n", cJSON_Print(serverJson));
 }
@@ -163,7 +152,7 @@ int initSocket() {
     return 0;
 }
 int acceptClient() {
-    // Accpet the client.
+    // Accept the client.
     struct sockaddr_storage clientAddr;
     socklen_t clientAddrLen = sizeof clientAddr;
     int clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &clientAddrLen);
@@ -175,12 +164,6 @@ int acceptClient() {
     inet_ntop(clientAddr.ss_family, &((struct sockaddr_in *) &clientAddr)->sin_addr, clientIP, sizeof clientIP);
     printf("Client %s:%d connected!\n", clientIP, ((struct sockaddr_in *) &clientAddr)->sin_port);
     return clientSocket;
-}
-void stop() {
-    cJSON_Delete(serverConfig);
-    cJSON_Delete(serverJson);
-    close(serverSocket);
-    exit(0);
 }
 
 bool sendBoolean(int socket, bool boolean) {
@@ -215,7 +198,7 @@ int asynHandleInput(void *arg) {
         char buffer[BUFFER_SIZE];
         scanf("%s", buffer);
         if (strcmp("exit", buffer) == 0) {
-            stop();
+            stop(0);
         }
         if (strcmp("update", buffer) == 0) {
             initConfig();
@@ -249,7 +232,7 @@ int asynHandleClient(void *arg) {
             sendBoolean(clientSocket, true);
             memset(buffer, 0, BUFFER_SIZE);
             recvString(clientSocket, buffer, BUFFER_SIZE);
-            File *file = newFile(buffer);
+            LocalFile *file = newLocalFile(buffer);
             sendSize(clientSocket, file->size);
             FILE *f = fopen(buffer, "rb");
             size_t bytes;
@@ -261,7 +244,7 @@ int asynHandleClient(void *arg) {
                 send(clientSocket, buffer, bytes, 0);
             }
             fclose(f);
-            freeFile(file);
+            freeLocalFile(file);
             continue;
         }
         if (strcmp("stop", buffer) == 0) {

@@ -4,7 +4,7 @@
 
 #include "FileSystem.h"
 
-char *generateFileUniqueIdentifier(File *file) {
+char *generateLocalFileUniqueIdentifier(LocalFile *file) {
     char buffer[BUFFER_SIZE];
     sprintf(buffer, "%s%ld", file->name, file->size);
     char *result = malloc(strlen(buffer) + 1);
@@ -12,23 +12,23 @@ char *generateFileUniqueIdentifier(File *file) {
     return result;
 }
 
-cJSON *fileToJson(File *file)  {
+cJSON *localFileToJson(LocalFile *file)  {
     cJSON *jsonObject = cJSON_CreateObject();
     cJSON_AddStringToObject(jsonObject, "Path", file->path);
     cJSON_AddStringToObject(jsonObject, "Name", file->name);
-    char *identifier = generateFileUniqueIdentifier(file);
+    char *identifier = generateLocalFileUniqueIdentifier(file);
     cJSON_AddStringToObject(jsonObject, "Identifier", identifier);
     free(identifier);
     return jsonObject;
 }
 
-File *fileFromJson(cJSON *jsonObj) {
-    return newFile(cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(jsonObj, "Path")));
+LocalFile *localFileFromJson(cJSON *jsonObj) {
+    return newLocalFile(cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(jsonObj, "Path")));
 }
 
-File *newFile(const char *path) {
+LocalFile *newLocalFile(const char *path) {
     size_t pathLength = strlen(path);
-    File *file = malloc(sizeof(File));
+    LocalFile *file = malloc(sizeof(LocalFile));
     file->path = malloc(pathLength + 1);
     strcpy(file->path, path);
     char buffer[pathLength];
@@ -54,7 +54,7 @@ File *newFile(const char *path) {
     return file;
 }
 
-void freeFile(File *file) {
+void freeLocalFile(LocalFile *file) {
     free(file->path);
     if (file->path != file->name) {
         free(file->name);

@@ -23,11 +23,11 @@ typedef struct {
     size_t size;
     char *name;
     char *path;
-} File;
+} LocalFile;
 
-File *newFile(const char *path);
+LocalFile *newLocalFile(const char *path);
 
-void freeFile(File *file);
+void freeLocalFile(LocalFile *file);
 
 /**
  * Generate a unique identifier of this file based on name and file size;
@@ -36,10 +36,10 @@ void freeFile(File *file);
  * @return The malloced string represent the identifier.
  *         Should be freed manually.
  */
-char *generateFileUniqueIdentifier(File *file);
+char *generateLocalFileUniqueIdentifier(LocalFile *file);
 
-cJSON *fileToJson(File *file);
+cJSON *localFileToJson(LocalFile *file);
 
-File *fileFromJson(cJSON *jsonObj);
+LocalFile *localFileFromJson(cJSON *jsonObj);
 
 #endif //UPDATERSERVER_FILESYSTEM_H

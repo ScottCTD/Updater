@@ -15,19 +15,25 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "cJSON.h"
 #include "dirent.h"
+#include "cJSON.h"
 
+/**
+ * ==================================================================================
+ *                                 LocalFile Starts
+ * ==================================================================================
+ */
 typedef struct {
     bool isDirectory;
     size_t size;
     char *name;
     char *path;
-} File;
+    char *identifier;
+} LocalFile;
 
-File *newFile(const char *path);
+LocalFile *newLocalFile(const char *path);
 
-void freeFile(File *file);
+void freeLocalFile(LocalFile *file);
 
 /**
  * Generate a unique identifier of this file based on name and file size;
@@ -36,10 +42,57 @@ void freeFile(File *file);
  * @return The malloced string represent the identifier.
  *         Should be freed manually.
  */
-char *generateFileUniqueIdentifier(File *file);
+char *generateLocalFileUniqueIdentifier(LocalFile *file);
 
-cJSON *fileToJson(File *file);
+cJSON *localFileToJson(LocalFile *file);
 
-File *fileFromJson(cJSON *jsonObj);
+LocalFile *localFileFromJson(cJSON *jsonObj);
+
+int localFileComparator(const void *file01, const void *file02);
+
+/**
+ * ==================================================================================
+ *                                 LocalFile Ends
+ * ==================================================================================
+ */
+
+/**
+ * ==================================================================================
+ *                                 RemoteFile Starts
+ * ==================================================================================
+ */
+typedef struct {
+    char *path;
+    char *name;
+    char *identifier;
+} RemoteFile;
+
+RemoteFile *remoteFileFromJson(cJSON *json);
+
+void freeRemoteFile(RemoteFile *file);
+
+int remoteFileComparator(const void *file01, const void *file02);
+
+/**
+ * ==================================================================================
+ *                                 RemoteFile Ends
+ * ==================================================================================
+ */
+
+/**
+ * ==================================================================================
+ *                            Utility Functions Start
+ * ==================================================================================
+ */
+
+void mkdirs(const char *path);
+
+/**
+ * ==================================================================================
+ *                            Utility Functions End
+ * ==================================================================================
+ */
+
+
 
 #endif //UPDATERSERVER_FILESYSTEM_H

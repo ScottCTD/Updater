@@ -10,14 +10,9 @@
 #include "FileSystem.h"
 
 #define SERVER_IP "127.0.0.1"
-#define PORT (30000)
+#define PORT (30001)
 #define BUFFER_SIZE (8192)
 
-#define SYNC_MODE_ALL (0)
-#define SYNC_MODE_HARD (1)
-#define SYNC_MODE_SOFT (2)
-
-int syncMode = SYNC_MODE_HARD;
 char *executableName = NULL;
 SOCKET serverSocket = INVALID_SOCKET;
 cJSON *clientJson = NULL;
@@ -44,7 +39,7 @@ void deleteDirectory(char *pathToDir) {
     rmdir(pathToDir);
 }
 
-void scanDirectory(File *directory, cJSON *clientDirArrayJson, cJSON *clientFileArrayJson) {
+void scanDirectory(LocalFile *directory, ArrayList *dirList, ArrayList *fileList) {
     DIR *dir = opendir(directory->path);
     struct dirent *entry = NULL;
     while ((entry = readdir(dir)) != NULL) {
@@ -58,15 +53,15 @@ void scanDirectory(File *directory, cJSON *clientDirArrayJson, cJSON *clientFile
         strcat(path, directory->path);
         strcat(path, "/");
         strcat(path, entry->d_name);
-        File *file = newFile(path);
+        LocalFile *file = newLocalFile(path);
         if (file->isDirectory) {
-            cJSON_AddItemToArray(clientDirArrayJson, cJSON_CreateString(file->path));
-            scanDirectory(file, clientDirArrayJson, clientFileArrayJson);
+            arrayListAdd(dirList, &file->path);
+            scanDirectory(file, dirList, fileList);
         } else {
-            cJSON_AddItemToArray(clientFileArrayJson, fileToJson(file));
+            arrayListAdd(fileList, file);
         }
-        freeFile(file);
     }
+    closedir(dir);
 }
 
 int initSocket() {
@@ -161,11 +156,26 @@ void recvFile(char *serverFilePath) {
     }
 }
 
-void stop() {
+void stop(int status) {
     sendString("stop");
     cJSON_Delete(clientJson);
     closesocket(serverSocket);
     WSACleanup();
+    exit(status);
+}
+
+int remoteLocalFileComparator(const void *remoteFile, const void *localFile) {
+    return strcmp(((const LocalFile *) localFile)->identifier, ((const RemoteFile *)remoteFile)->identifier);
+}
+
+int localRemoteFileComparator(const void *localFile, const void *remoteFile) {
+    return strcmp(((const LocalFile *) localFile)->identifier, ((const RemoteFile *)remoteFile)->identifier);
+}
+
+int remoteLocalDirPathComparator(const void *remotePath, const void *localPath) {
+    char *rp = *((char **) remotePath);
+    char *lp = *((char **) localPath);
+    return strcmp(rp, lp);
 }
 
 int main() {
@@ -182,16 +192,18 @@ int main() {
     printf("Retrieving server config!\n");
     size_t size = recvSize();
     char *serverConfigString = recvString(size);
-    cJSON *config = cJSON_Parse(serverConfigString);
-    cJSON *mode = cJSON_GetObjectItemCaseSensitive(config, "Mode");
-    if (strcmp("ALL", mode->valuestring) == 0) {
-        syncMode = SYNC_MODE_ALL;
-    } else if (strcmp("HARD", mode->valuestring) == 0) {
-        syncMode = SYNC_MODE_HARD;
-    } else if (strcmp("SOFT", mode->valuestring) == 0) {
-        syncMode = SYNC_MODE_SOFT;
+    cJSON *serverConfig = cJSON_Parse(serverConfigString);
+    cJSON *serverTempJson = NULL;
+    // Create missing root dirs and record client dirs and files.
+    ArrayList *clientDirList = arrayListNew(sizeof(char *));
+    ArrayList *clientFileList = arrayListNew(sizeof(LocalFile));
+    cJSON_ArrayForEach(serverTempJson, cJSON_GetObjectItemCaseSensitive(serverConfig, "Sync Files / Directories")) {
+        char *path = cJSON_GetStringValue(serverTempJson) + 10;
+        mkdirs(path);
+        LocalFile *dir = newLocalFile(path);
+        scanDirectory(dir, clientDirList, clientFileList);
+        freeLocalFile(dir);
     }
-    printf("Sync Mode = %d\n", syncMode);
 
     sendString("list");
     printf("Listing server files!\n");
@@ -199,95 +211,81 @@ int main() {
     char *serverJsonString = recvString(size);
     printf("%s\n", serverJsonString);
 
-    printf("Processing Data\n");
+    printf("Synchronizing files...\n");
     cJSON *serverJson = cJSON_Parse(serverJsonString);
-    cJSON *serverDirJson = cJSON_GetObjectItemCaseSensitive(serverJson, "Directories");
-    cJSON *serverRootDirJson = cJSON_GetObjectItemCaseSensitive(serverJson, "Root Directories");
-    cJSON *serverTempJson = NULL;
-    // Create missing dirs
-    cJSON_ArrayForEach(serverTempJson, serverRootDirJson) {
+    cJSON *serverDirArrayJson = cJSON_GetObjectItemCaseSensitive(serverJson, "Directories");
+    // Create missing dirs and collect server dirs into an ArrayList
+    ArrayList *serverDirList = arrayListNew(sizeof(char *));
+    cJSON_ArrayForEach(serverTempJson, serverDirArrayJson) {
         char *path = serverTempJson->valuestring + 10;
-        if (opendir(path) == NULL) {
-            mkdir(path);
-        }
+        mkdirs(path);
+        arrayListAdd(serverDirList, &path);
     }
-    cJSON_ArrayForEach(serverTempJson, serverDirJson) {
-        char *path = serverTempJson->valuestring + 10;
-        if (opendir(path) == NULL) {
-            mkdir(path);
-        }
+    // Collect server files into an ArrayList
+    ArrayList *serverFileList = arrayListNew(sizeof(RemoteFile));
+    cJSON_ArrayForEach(serverTempJson, cJSON_GetObjectItemCaseSensitive(serverJson, "Files")) {
+        RemoteFile *file = remoteFileFromJson(serverTempJson);
+        arrayListAdd(serverFileList, file);
     }
-    // Scan client files based on different sync modes.
-    clientJson = cJSON_CreateObject();
-    cJSON *clientDirArrayJson = cJSON_AddArrayToObject(clientJson, "Directories");
-    cJSON *clientFileArrayJson = cJSON_AddArrayToObject(clientJson, "Files");
-    if (syncMode == SYNC_MODE_ALL) {
-        File *file = newFile(".");
-        scanDirectory(file, clientDirArrayJson, clientFileArrayJson);
-        freeFile(file);
-    } else {
-        cJSON_ArrayForEach(serverTempJson, serverRootDirJson) {
-            File *file = newFile(serverTempJson->valuestring + 10);
-            scanDirectory(file, clientDirArrayJson, clientFileArrayJson);
-            freeFile(file);
-        }
-    }
-    printf("%s\n", cJSON_Print(clientJson));
     // Download missing files
-    cJSON *clientTempJson = NULL;
-    cJSON *serverfilesJson = cJSON_GetObjectItemCaseSensitive(serverJson, "Files");
-    cJSON_ArrayForEach(serverTempJson, serverfilesJson) {
-        char *serverIdentifier = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Identifier"));
-        bool isClientHasFile = false;
-        cJSON_ArrayForEach(clientTempJson, clientFileArrayJson) {
-            char *clientIdentifier = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(clientTempJson, "Identifier"));
-            if (strcmp(serverIdentifier, clientIdentifier) == 0) {
-                isClientHasFile = true;
-                break;
-            }
-        }
-        if (!isClientHasFile) {
-            char *serverFilePath = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Path"));
-            recvFile(serverFilePath);
+    arrayListSort(clientFileList, localFileComparator);
+    arrayListSort(serverFileList, remoteFileComparator);
+    for (int i = 0; i < arrayListSize(serverFileList); ++i) {
+        RemoteFile *remoteFile = arrayListGet(serverFileList, i);
+        LocalFile *localFile = arrayListBinarySearch(clientFileList, remoteFile, remoteLocalFileComparator);
+        if (localFile == NULL) {
+            recvFile(remoteFile->path);
         }
     }
-    printf("%s\n", cJSON_Print(clientJson));
     // Delete other dirs
-    cJSON_ArrayForEach(clientTempJson, clientDirArrayJson) {
-        char *clientDirPath = cJSON_GetStringValue(clientTempJson);
-        bool isServerHasDir = false;
-        cJSON_ArrayForEach(serverTempJson, serverDirJson) {
-            char *serverDirPath = cJSON_GetStringValue(serverTempJson) + 10;
-            if (strcmp(clientDirPath, serverDirPath) == 0) {
-                isServerHasDir = true;
-                continue;
-            }
-        }
-        if (!isServerHasDir) {
-            deleteDirectory(clientDirPath);
+    arrayListSort(clientDirList, remoteLocalDirPathComparator);
+    arrayListSort(serverDirList, remoteLocalDirPathComparator);
+    for (int i = 0; i < arrayListSize(clientDirList); ++i) {
+        char **clientDir = arrayListGet(clientDirList, i);
+        char **remoteDir = arrayListBinarySearch(serverDirList, clientDir, remoteLocalDirPathComparator);
+        if (remoteDir == NULL) {
+            deleteDirectory(*clientDir);
         }
     }
+
     // Delete other files
-    cJSON_ArrayForEach(clientTempJson, clientFileArrayJson) {
-        char *clientFilePath = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(clientTempJson, "Path"));
-        bool isServerHasFile = false;
-        cJSON_ArrayForEach(serverTempJson, serverfilesJson) {
-            char *serverFilePath = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Path")) + 10;
-            if (strcmp(clientFilePath, serverFilePath) == 0) {
-                isServerHasFile = true;
-                continue;
-            }
-        }
-        if (!isServerHasFile) {
-            unlink(clientFilePath);
+    for (int i = 0; i < arrayListSize(clientFileList); ++i) {
+        LocalFile *localFile = arrayListGet(clientFileList, i);
+        RemoteFile *remoteFile = arrayListBinarySearch(serverFileList, localFile, localRemoteFileComparator);
+        if (remoteFile == NULL) {
+            unlink(localFile->path);
         }
     }
 
     // Deallocate memory
     free(serverConfigString);
+    serverConfigString = NULL;
     free(serverJsonString);
+    serverJsonString = NULL;
+    for (int i = 0; i < arrayListSize(serverFileList); ++i) {
+        RemoteFile *file = arrayListGet(serverFileList, i);
+        free(file->name);
+        free(file->path);
+        free(file->identifier);
+    }
+    arrayListDelete(serverFileList);
+    serverFileList = NULL;
+    arrayListDelete(serverDirList);
+    serverDirList = NULL;
+    for (int i = 0; i < arrayListSize(clientFileList); ++i) {
+        LocalFile *file = arrayListGet(clientFileList, i);
+        free(file->name);
+        free(file->path);
+        free(file->identifier);
+    }
+    arrayListDelete(clientFileList);
+    clientFileList = NULL;
+    arrayListDelete(clientDirList);
+    clientDirList = NULL;
     cJSON_Delete(serverJson);
-    stop();
-    return 0;
+    serverJson = NULL;
+    free(serverConfig);
+    serverConfig = NULL;
+    stop(0);
 }
 

@@ -27,10 +27,10 @@ string.h
 -
 sys/stat.h
 -
-cJSON.h
-C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
 dirent.h
 C:/Scott/Code/Updater/UpdaterClient/src/dirent.h
+cJSON.h
+C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
 
 C:/Scott/Code/Updater/UpdaterClient/src/Main.c
 stdio.h
