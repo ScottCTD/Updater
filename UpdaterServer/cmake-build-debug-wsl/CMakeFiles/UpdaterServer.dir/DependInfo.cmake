@@ -4,7 +4,6 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/mnt/c/Scott/Code/Updater/UpdaterServer/src/ArrayList.c" "/mnt/c/Scott/Code/Updater/UpdaterServer/cmake-build-debug-wsl/CMakeFiles/UpdaterServer.dir/src/ArrayList.c.o"
   "/mnt/c/Scott/Code/Updater/UpdaterServer/src/FileSystem.c" "/mnt/c/Scott/Code/Updater/UpdaterServer/cmake-build-debug-wsl/CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o"
   "/mnt/c/Scott/Code/Updater/UpdaterServer/src/Main.c" "/mnt/c/Scott/Code/Updater/UpdaterServer/cmake-build-debug-wsl/CMakeFiles/UpdaterServer.dir/src/Main.c.o"
   "/mnt/c/Scott/Code/Updater/UpdaterServer/src/cJSON.c" "/mnt/c/Scott/Code/Updater/UpdaterServer/cmake-build-debug-wsl/CMakeFiles/UpdaterServer.dir/src/cJSON.c.o"

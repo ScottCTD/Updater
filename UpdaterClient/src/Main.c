@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include <winsock2.h>
 #include <windows.h>
-#include <ws2tcpip.h>
-#include <stdbool.h>
 
 #include "cJSON.h"
-#include "dirent.h"
-#include "ArrayList.h"
 #include "FileSystem.h"
+#include "NetworkSystem.h"
 
 #define SERVER_IP "127.0.0.1"
 #define PORT (30001)
@@ -15,277 +12,157 @@
 
 char *executableName = NULL;
 SOCKET serverSocket = INVALID_SOCKET;
-cJSON *clientJson = NULL;
 
-void deleteDirectory(char *pathToDir) {
-    DIR *dir = opendir(pathToDir);
-    struct dirent *entry = NULL;
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(".", entry->d_name) == 0 ||
-            strcmp("..", entry->d_name) == 0 ||
-            strcmp(executableName, entry->d_name) == 0) {
-            continue;
-        }
-        char path[BUFFER_SIZE];
-        strcat(path, pathToDir);
-        strcat(path, "/");
-        strcat(path, entry->d_name);
-        if (entry->d_type == DT_DIR) {
-            deleteDirectory(path);
-        } else if (entry->d_type == DT_REG) {
-            unlink(path);
-        }
+int comparatorLocalFileIdentifier(const LocalFile *a, const void *b) {
+    if (a->identifier == NULL) {
+        return -1;
     }
-    rmdir(pathToDir);
+    const char *c = b;
+    return strcmp(a->identifier, c);
 }
 
-void scanDirectory(LocalFile *directory, ArrayList *dirList, ArrayList *fileList) {
-    DIR *dir = opendir(directory->path);
-    struct dirent *entry = NULL;
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(".", entry->d_name) == 0 ||
-            strcmp("..", entry->d_name) == 0 ||
-            strcmp(executableName, entry->d_name) == 0) {
-            continue;
+void deleteExtraLocalFiles(LocalFile *localFileHead, cJSON *serverSyncDirJsonArray, cJSON *serverDirJsonArray, cJSON *serverFileJsonArray) {
+    for (LocalFile *localFile = localFileHead; localFile != NULL; localFile = localFile->next) {
+        if (localFile->child != NULL) {
+            deleteExtraLocalFiles(localFile->child, serverSyncDirJsonArray, serverDirJsonArray, serverFileJsonArray);
         }
-        char path[BUFFER_SIZE];
-        memset(path, 0, 256);
-        strcat(path, directory->path);
-        strcat(path, "/");
-        strcat(path, entry->d_name);
-        LocalFile *file = newLocalFile(path);
-        if (file->isDirectory) {
-            arrayListAdd(dirList, &file->path);
-            scanDirectory(file, dirList, fileList);
+        bool found = false;
+        cJSON *tempJson = NULL;
+        if (localFile->isDirectory) {
+            cJSON_ArrayForEach(tempJson, serverDirJsonArray) {
+                char *serverDirPath = cJSON_GetStringValue(tempJson);
+                if (strcmp(localFile->path, serverDirPath + 10) == 0) {
+                    found = true;
+                    break;
+                }
+            }
+            cJSON_ArrayForEach(tempJson, serverSyncDirJsonArray) {
+                char *serverDirPath = cJSON_GetStringValue(tempJson);
+                if (strcmp(localFile->path, serverDirPath) == 0) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                deleteDirectory(localFile->path);
+            }
         } else {
-            arrayListAdd(fileList, file);
-        }
-    }
-    closedir(dir);
-}
-
-int initSocket() {
-    WSADATA wsaData;
-    int result;
-    if ((result = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
-        printf("WSAStartup Failed with code %d\n", result);
-        return -1;
-    }
-
-    struct addrinfo hint, *serverInfo;
-    memset(&hint, 0, sizeof(struct addrinfo));
-    hint.ai_family = AF_INET;
-    hint.ai_socktype = SOCK_STREAM;
-    char port[6];
-    sprintf(port, "%d", htons(PORT));
-    if ((result = getaddrinfo(SERVER_IP, port, &hint, &serverInfo)) != 0) {
-        printf("getaddrinfo Failed with code %d\n", result);
-        WSACleanup();
-        return -1;
-    }
-
-    struct sockaddr_in *serverAddress = ((struct sockaddr_in *) serverInfo->ai_addr);
-    printf("Connecting to server %s:%d\n", inet_ntoa(serverAddress->sin_addr), serverAddress->sin_port);
-
-    struct addrinfo *realAddrInfo;
-    for (realAddrInfo = serverInfo; realAddrInfo != NULL; realAddrInfo = realAddrInfo->ai_next) {
-        if ((serverSocket = socket(realAddrInfo->ai_family, realAddrInfo->ai_socktype, realAddrInfo->ai_protocol)) == INVALID_SOCKET) {
-            printf("socket Failed with code %d\n", WSAGetLastError());
-            continue;
-        }
-        if ((result = connect(serverSocket, realAddrInfo->ai_addr, (int) realAddrInfo->ai_addrlen)) == SOCKET_ERROR) {
-            printf("connect Failed with code %d\n", result);
-            continue;
-        }
-        break;
-    }
-    if (realAddrInfo == NULL || serverSocket == INVALID_SOCKET) {
-        printf("Failed to connect to the server!\n");
-        WSACleanup();
-        return -1;
-    }
-
-    serverAddress = ((struct sockaddr_in *) realAddrInfo->ai_addr);
-    printf("Connected to %s:%d\n", inet_ntoa(serverAddress->sin_addr), serverAddress->sin_port);
-    freeaddrinfo(serverInfo);
-    return 0;
-}
-
-int sendString(char *string) {
-    return send(serverSocket, string, (int) strlen(string), 0);
-}
-
-bool recvBoolean() {
-    bool boolean;
-    recv(serverSocket, (char *) &boolean, 1, 0);
-    return boolean;
-}
-char *recvString(size_t totalSize) {
-    char buffer[BUFFER_SIZE];
-    size_t bytes, total = 0;
-    char *string = NULL;
-    while (total < totalSize && (bytes = recv(serverSocket, buffer, BUFFER_SIZE, 0)) > 0) {
-        if (string == NULL) {
-            string = calloc(bytes + 1, 1);
-        } else {
-            char *temp = realloc(string, strlen(string) + bytes + 1);
-            string = temp;
-        }
-        strncat(string, buffer, bytes);
-        total += bytes;
-    }
-    return string;
-}
-size_t recvSize() {
-    size_t size = 0;
-    recv(serverSocket, (char *) &size, sizeof(size_t), 0);
-    return size;
-}
-void recvFile(char *serverFilePath) {
-    sendString("download");
-    if (recvBoolean()) {
-        sendString(serverFilePath);
-        char buffer[BUFFER_SIZE];
-        size_t size = recvSize();
-        size_t bytes, total = 0;
-        FILE *file = fopen(serverFilePath + 10, "wb");
-        while (total < size && (bytes = recv(serverSocket, buffer, BUFFER_SIZE, 0)) > 0) {
-            fwrite(buffer, 1, bytes, file);
-            total += bytes;
+            cJSON_ArrayForEach(tempJson, serverFileJsonArray) {
+                char *serverFileIdentifier = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(tempJson, "Identifier"));
+                if (strcmp(localFile->identifier, serverFileIdentifier) == 0) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                unlink(localFile->path);
+            }
         }
     }
 }
 
 void stop(int status) {
-    sendString("stop");
-    cJSON_Delete(clientJson);
+    sendString(serverSocket, "stop");
+    free(executableName);
     closesocket(serverSocket);
     WSACleanup();
     exit(status);
 }
 
-int remoteLocalFileComparator(const void *remoteFile, const void *localFile) {
-    return strcmp(((const LocalFile *) localFile)->identifier, ((const RemoteFile *)remoteFile)->identifier);
-}
-
-int localRemoteFileComparator(const void *localFile, const void *remoteFile) {
-    return strcmp(((const LocalFile *) localFile)->identifier, ((const RemoteFile *)remoteFile)->identifier);
-}
-
-int remoteLocalDirPathComparator(const void *remotePath, const void *localPath) {
-    char *rp = *((char **) remotePath);
-    char *lp = *((char **) localPath);
-    return strcmp(rp, lp);
-}
-
 int main() {
-    char buffer[256];
-    GetModuleFileName(NULL, buffer, 256);
-    executableName = strrchr(buffer, '\\') + 1;
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+    // Get our executable name
+    GetModuleFileName(NULL, buffer, BUFFER_SIZE);
+    char *pos = strrchr(buffer, '\\') + 1;
+    executableName = malloc(strlen(pos) + 1);
+    strcpy(executableName, pos);
 
-    int result;
-    if ((result = initSocket()) != 0) {
-        return result;
+    if ((serverSocket = initSocketOnClient(SERVER_IP, PORT)) == -1) {
+        return (int) serverSocket;
     }
 
-    sendString("config");
-    printf("Retrieving server config!\n");
-    size_t size = recvSize();
-    char *serverConfigString = recvString(size);
-    cJSON *serverConfig = cJSON_Parse(serverConfigString);
-    cJSON *serverTempJson = NULL;
-    // Create missing root dirs and record client dirs and files.
-    ArrayList *clientDirList = arrayListNew(sizeof(char *));
-    ArrayList *clientFileList = arrayListNew(sizeof(LocalFile));
-    cJSON_ArrayForEach(serverTempJson, cJSON_GetObjectItemCaseSensitive(serverConfig, "Sync Files / Directories")) {
-        char *path = cJSON_GetStringValue(serverTempJson) + 10;
-        mkdirs(path);
-        LocalFile *dir = newLocalFile(path);
-        scanDirectory(dir, clientDirList, clientFileList);
-        freeLocalFile(dir);
+    // Retrieve Config from server
+    sendString(serverSocket, "config");
+    printf("Retrieving server config...\n");
+    size_t size = recvSize(serverSocket);
+    char serverConfigString[size + 1];
+    memset(serverConfigString, 0, size + 1);
+    recvString(serverSocket, size, serverConfigString);
+    cJSON *serverConfigJson = cJSON_Parse(serverConfigString);
+    if (serverConfigJson == NULL) {
+        printf("Failed to retrieve complete server config! Please retry later.\n");
+        stop(-1);
     }
+    printf("Successfully retrieved server config!\n");
 
-    sendString("list");
+    // List all files in server
+    sendString(serverSocket, "list");
     printf("Listing server files!\n");
-    size = recvSize();
-    char *serverJsonString = recvString(size);
-    printf("%s\n", serverJsonString);
+    size = recvSize(serverSocket);
+    char serverDataString[size + 1];
+    memset(serverDataString, 0, size + 1);
+    recvString(serverSocket, size, serverDataString);
+    cJSON *serverDataJson = cJSON_Parse(serverDataString);
+    if (serverDataJson == NULL) {
+        printf("Failed to list server files! Please retry later.\n");
+        stop(-1);
+    }
+    printf("Successfully list server files!\n");
 
-    printf("Synchronizing files...\n");
-    cJSON *serverJson = cJSON_Parse(serverJsonString);
-    cJSON *serverDirArrayJson = cJSON_GetObjectItemCaseSensitive(serverJson, "Directories");
-    // Create missing dirs and collect server dirs into an ArrayList
-    ArrayList *serverDirList = arrayListNew(sizeof(char *));
-    cJSON_ArrayForEach(serverTempJson, serverDirArrayJson) {
-        char *path = serverTempJson->valuestring + 10;
-        mkdirs(path);
-        arrayListAdd(serverDirList, &path);
+    // Create missing dirs
+    cJSON *serverTempJson = NULL;
+    printf("Creating missing directories...\n");
+    cJSON *serverSyncDirJsonArray = cJSON_GetObjectItemCaseSensitive(serverConfigJson, "Sync Directories");
+    cJSON_ArrayForEach(serverTempJson, serverSyncDirJsonArray) {
+        mkdirs(cJSON_GetStringValue(serverTempJson));
     }
-    // Collect server files into an ArrayList
-    ArrayList *serverFileList = arrayListNew(sizeof(RemoteFile));
-    cJSON_ArrayForEach(serverTempJson, cJSON_GetObjectItemCaseSensitive(serverJson, "Files")) {
-        RemoteFile *file = remoteFileFromJson(serverTempJson);
-        arrayListAdd(serverFileList, file);
+    cJSON *serverDirJsonArray = cJSON_GetObjectItemCaseSensitive(serverDataJson, "Directories");
+    cJSON_ArrayForEach(serverTempJson, serverDirJsonArray) {
+        mkdirs(cJSON_GetStringValue(serverTempJson) + 10);
     }
-    // Download missing files
-    arrayListSort(clientFileList, localFileComparator);
-    arrayListSort(serverFileList, remoteFileComparator);
-    for (int i = 0; i < arrayListSize(serverFileList); ++i) {
-        RemoteFile *remoteFile = arrayListGet(serverFileList, i);
-        LocalFile *localFile = arrayListBinarySearch(clientFileList, remoteFile, remoteLocalFileComparator);
-        if (localFile == NULL) {
-            recvFile(remoteFile->path);
+    printf("Successfully created missing directories!\n");
+
+    // Scan local files based on sync directories and sync files.
+    printf("Scanning local files and directories...\n");
+    LocalFile *clientDataHead = NULL;
+    cJSON_ArrayForEach(serverTempJson, serverSyncDirJsonArray) {
+        char *synDirPath = cJSON_GetStringValue(serverTempJson);
+        LocalFile *dir = newLocalFile(synDirPath);
+        if (clientDataHead == NULL) {
+            clientDataHead = dir;
+        } else {
+            LocalFile *temp = NULL;
+            for (temp = clientDataHead; temp->next != NULL; temp = temp->next);
+            temp->next = dir;
+            dir->prev = temp;
+        }
+        createLocalFileTree(dir);
+    }
+    printf("Successfully collected local files and directories!\n");
+
+    // Download missing files.
+    printf("Downloading missing files...\n");
+    cJSON *serverFileJsonArray = cJSON_GetObjectItemCaseSensitive(serverDataJson, "Files");
+    cJSON_ArrayForEach(serverTempJson, serverFileJsonArray) {
+        char *serverFileIdentifier = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Identifier"));
+        LocalFile *result = searchLocalFileInFileTreeWithComparator(clientDataHead, serverFileIdentifier, comparatorLocalFileIdentifier);
+        if (result == NULL) {
+            char *serverFilePath = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Path"));
+            printf("Downloading %s\n", serverFilePath);
+            downloadFileFromServer(serverSocket, serverFilePath, serverFilePath + 10);
         }
     }
-    // Delete other dirs
-    arrayListSort(clientDirList, remoteLocalDirPathComparator);
-    arrayListSort(serverDirList, remoteLocalDirPathComparator);
-    for (int i = 0; i < arrayListSize(clientDirList); ++i) {
-        char **clientDir = arrayListGet(clientDirList, i);
-        char **remoteDir = arrayListBinarySearch(serverDirList, clientDir, remoteLocalDirPathComparator);
-        if (remoteDir == NULL) {
-            deleteDirectory(*clientDir);
-        }
-    }
+    printf("Successfully downloaded all missing files!\n");
 
-    // Delete other files
-    for (int i = 0; i < arrayListSize(clientFileList); ++i) {
-        LocalFile *localFile = arrayListGet(clientFileList, i);
-        RemoteFile *remoteFile = arrayListBinarySearch(serverFileList, localFile, localRemoteFileComparator);
-        if (remoteFile == NULL) {
-            unlink(localFile->path);
-        }
-    }
+    // Delete other files and directories.
+    printf("Deleting extra files and directories...\n");
+    deleteExtraLocalFiles(clientDataHead, serverSyncDirJsonArray, serverDirJsonArray, serverFileJsonArray);
+    printf("Successfully deleted extra files and directories!\n");
 
-    // Deallocate memory
-    free(serverConfigString);
-    serverConfigString = NULL;
-    free(serverJsonString);
-    serverJsonString = NULL;
-    for (int i = 0; i < arrayListSize(serverFileList); ++i) {
-        RemoteFile *file = arrayListGet(serverFileList, i);
-        free(file->name);
-        free(file->path);
-        free(file->identifier);
-    }
-    arrayListDelete(serverFileList);
-    serverFileList = NULL;
-    arrayListDelete(serverDirList);
-    serverDirList = NULL;
-    for (int i = 0; i < arrayListSize(clientFileList); ++i) {
-        LocalFile *file = arrayListGet(clientFileList, i);
-        free(file->name);
-        free(file->path);
-        free(file->identifier);
-    }
-    arrayListDelete(clientFileList);
-    clientFileList = NULL;
-    arrayListDelete(clientDirList);
-    clientDirList = NULL;
-    cJSON_Delete(serverJson);
-    serverJson = NULL;
-    free(serverConfig);
-    serverConfig = NULL;
+    cJSON_Delete(serverConfigJson);
+    cJSON_Delete(serverDataJson);
+    freeLocalFile(clientDataHead);
     stop(0);
 }
 

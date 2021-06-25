@@ -88,22 +88,9 @@ CMakeFiles/UpdaterClient.dir/src/cJSON.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/UpdaterClient.dir/src/cJSON.c.s"
 	C:\Software\mingw64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S C:\Scott\Code\Updater\UpdaterClient\src\cJSON.c -o CMakeFiles\UpdaterClient.dir\src\cJSON.c.s
 
-CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj: CMakeFiles/UpdaterClient.dir/flags.make
-CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj: ../src/ArrayList.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Scott\Code\Updater\UpdaterClient\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj"
-	C:\Software\mingw64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles\UpdaterClient.dir\src\ArrayList.c.obj -c C:\Scott\Code\Updater\UpdaterClient\src\ArrayList.c
-
-CMakeFiles/UpdaterClient.dir/src/ArrayList.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/UpdaterClient.dir/src/ArrayList.c.i"
-	C:\Software\mingw64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E C:\Scott\Code\Updater\UpdaterClient\src\ArrayList.c > CMakeFiles\UpdaterClient.dir\src\ArrayList.c.i
-
-CMakeFiles/UpdaterClient.dir/src/ArrayList.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/UpdaterClient.dir/src/ArrayList.c.s"
-	C:\Software\mingw64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S C:\Scott\Code\Updater\UpdaterClient\src\ArrayList.c -o CMakeFiles\UpdaterClient.dir\src\ArrayList.c.s
-
 CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj: CMakeFiles/UpdaterClient.dir/flags.make
 CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj: ../src/FileSystem.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Scott\Code\Updater\UpdaterClient\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Scott\Code\Updater\UpdaterClient\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj"
 	C:\Software\mingw64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles\UpdaterClient.dir\src\FileSystem.c.obj -c C:\Scott\Code\Updater\UpdaterClient\src\FileSystem.c
 
 CMakeFiles/UpdaterClient.dir/src/FileSystem.c.i: cmake_force
@@ -113,6 +100,19 @@ CMakeFiles/UpdaterClient.dir/src/FileSystem.c.i: cmake_force
 CMakeFiles/UpdaterClient.dir/src/FileSystem.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/UpdaterClient.dir/src/FileSystem.c.s"
 	C:\Software\mingw64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S C:\Scott\Code\Updater\UpdaterClient\src\FileSystem.c -o CMakeFiles\UpdaterClient.dir\src\FileSystem.c.s
+
+CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.obj: CMakeFiles/UpdaterClient.dir/flags.make
+CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.obj: ../src/NetworkSystem.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Scott\Code\Updater\UpdaterClient\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.obj"
+	C:\Software\mingw64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles\UpdaterClient.dir\src\NetworkSystem.c.obj -c C:\Scott\Code\Updater\UpdaterClient\src\NetworkSystem.c
+
+CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.i"
+	C:\Software\mingw64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E C:\Scott\Code\Updater\UpdaterClient\src\NetworkSystem.c > CMakeFiles\UpdaterClient.dir\src\NetworkSystem.c.i
+
+CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.s"
+	C:\Software\mingw64\bin\gcc.exe $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S C:\Scott\Code\Updater\UpdaterClient\src\NetworkSystem.c -o CMakeFiles\UpdaterClient.dir\src\NetworkSystem.c.s
 
 CMakeFiles/UpdaterClient.dir/src/Main.c.obj: CMakeFiles/UpdaterClient.dir/flags.make
 CMakeFiles/UpdaterClient.dir/src/Main.c.obj: ../src/Main.c
@@ -130,16 +130,16 @@ CMakeFiles/UpdaterClient.dir/src/Main.c.s: cmake_force
 # Object files for target UpdaterClient
 UpdaterClient_OBJECTS = \
 "CMakeFiles/UpdaterClient.dir/src/cJSON.c.obj" \
-"CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj" \
 "CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj" \
+"CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.obj" \
 "CMakeFiles/UpdaterClient.dir/src/Main.c.obj"
 
 # External object files for target UpdaterClient
 UpdaterClient_EXTERNAL_OBJECTS =
 
 build/UpdaterClient.exe: CMakeFiles/UpdaterClient.dir/src/cJSON.c.obj
-build/UpdaterClient.exe: CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj
 build/UpdaterClient.exe: CMakeFiles/UpdaterClient.dir/src/FileSystem.c.obj
+build/UpdaterClient.exe: CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.obj
 build/UpdaterClient.exe: CMakeFiles/UpdaterClient.dir/src/Main.c.obj
 build/UpdaterClient.exe: CMakeFiles/UpdaterClient.dir/build.make
 build/UpdaterClient.exe: CMakeFiles/UpdaterClient.dir/linklibs.rsp

@@ -61,16 +61,75 @@ LocalFile *newLocalFile(const char *path) {
         file->size = fileStat.st_size;
         file->identifier = generateLocalFileUniqueIdentifier(file);
     }
+    file->next = NULL;
+    file->prev = NULL;
+    file->child = NULL;
     return file;
 }
 
-void freeLocalFile(LocalFile *file) {
-    free(file->path);
-    if (file->path != file->name) {
-        free(file->name);
+LocalFile *searchLocalFileInFileTreeWithComparator(LocalFile *fileTreeStart, const void *element,
+                                                   int (*comparator)(const LocalFile *, const void *)) {
+    for (LocalFile *temp = fileTreeStart; temp != NULL; temp = temp->next) {
+        if (comparator(temp, element) == 0) {
+            return temp;
+        }
+        if (temp->child != NULL) {
+            LocalFile *result = searchLocalFileInFileTreeWithComparator(temp->child, element, comparator);
+            if (result != NULL) {
+                return result;
+            }
+        }
     }
-    free(file->identifier);
-    free(file);
+    return NULL;
+}
+
+void createLocalFileTree(LocalFile *startDir) {
+    if (!startDir->isDirectory) {
+        return;
+    }
+    DIR *dir = opendir(startDir->path);
+    struct dirent *entry = NULL;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(".", entry->d_name) == 0 ||
+            strcmp("..", entry->d_name) == 0) {
+            continue;
+        }
+        char path[BUFFER_SIZE];
+        memset(path, 0, 256);
+        strcat(path, startDir->path);
+        strcat(path, "/");
+        strcat(path, entry->d_name);
+        LocalFile *file = newLocalFile(path);
+        if (startDir->child == NULL) {
+            startDir->child = file;
+        } else {
+            LocalFile *temp;
+            for (temp = startDir->child; temp->next != NULL; temp = temp->next);
+            temp->next = file;
+            file->prev = temp;
+        }
+        if (file->isDirectory) {
+            createLocalFileTree(file);
+        }
+    }
+    closedir(dir);
+}
+
+void freeLocalFile(LocalFile *file) {
+    for (LocalFile *temp = file; temp != NULL;) {
+        if (temp->child != NULL) {
+            freeLocalFile(temp->child);
+        }
+        free(temp->path);
+        if (temp->path != temp->name) {
+            free(temp->name);
+        }
+        free(temp->identifier);
+        temp = temp->next;
+        if (temp != NULL) {
+            free(temp->prev);
+        }
+    }
 }
 
 int localFileComparator(const void *file01, const void *file02) {
@@ -141,6 +200,28 @@ void mkdirs(const char *path) {
             mkdir(path);
         }
     }
+}
+
+void deleteDirectory(char *pathToDir) {
+    DIR *dir = opendir(pathToDir);
+    struct dirent *entry = NULL;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(".", entry->d_name) == 0 ||
+            strcmp("..", entry->d_name) == 0) {
+            continue;
+        }
+        char path[BUFFER_SIZE];
+        memset(path, 0, BUFFER_SIZE);
+        strcat(path, pathToDir);
+        strcat(path, "/");
+        strcat(path, entry->d_name);
+        if (entry->d_type == DT_DIR) {
+            deleteDirectory(path);
+        } else if (entry->d_type == DT_REG) {
+            unlink(path);
+        }
+    }
+    rmdir(pathToDir);
 }
 
 /**

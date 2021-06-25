@@ -141,33 +141,6 @@ UpdaterClient/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/build
 .PHONY : UpdaterClient/fast
 
-src/ArrayList.obj: src/ArrayList.c.obj
-
-.PHONY : src/ArrayList.obj
-
-# target to build an object file
-src/ArrayList.c.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/ArrayList.c.obj
-.PHONY : src/ArrayList.c.obj
-
-src/ArrayList.i: src/ArrayList.c.i
-
-.PHONY : src/ArrayList.i
-
-# target to preprocess a source file
-src/ArrayList.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/ArrayList.c.i
-.PHONY : src/ArrayList.c.i
-
-src/ArrayList.s: src/ArrayList.c.s
-
-.PHONY : src/ArrayList.s
-
-# target to generate assembly for a file
-src/ArrayList.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/ArrayList.c.s
-.PHONY : src/ArrayList.c.s
-
 src/FileSystem.obj: src/FileSystem.c.obj
 
 .PHONY : src/FileSystem.obj
@@ -222,6 +195,33 @@ src/Main.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/Main.c.s
 .PHONY : src/Main.c.s
 
+src/NetworkSystem.obj: src/NetworkSystem.c.obj
+
+.PHONY : src/NetworkSystem.obj
+
+# target to build an object file
+src/NetworkSystem.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.obj
+.PHONY : src/NetworkSystem.c.obj
+
+src/NetworkSystem.i: src/NetworkSystem.c.i
+
+.PHONY : src/NetworkSystem.i
+
+# target to preprocess a source file
+src/NetworkSystem.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.i
+.PHONY : src/NetworkSystem.c.i
+
+src/NetworkSystem.s: src/NetworkSystem.c.s
+
+.PHONY : src/NetworkSystem.s
+
+# target to generate assembly for a file
+src/NetworkSystem.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\UpdaterClient.dir\build.make CMakeFiles/UpdaterClient.dir/src/NetworkSystem.c.s
+.PHONY : src/NetworkSystem.c.s
+
 src/cJSON.obj: src/cJSON.c.obj
 
 .PHONY : src/cJSON.obj
@@ -258,15 +258,15 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... UpdaterClient
-	@echo ... src/ArrayList.obj
-	@echo ... src/ArrayList.i
-	@echo ... src/ArrayList.s
 	@echo ... src/FileSystem.obj
 	@echo ... src/FileSystem.i
 	@echo ... src/FileSystem.s
 	@echo ... src/Main.obj
 	@echo ... src/Main.i
 	@echo ... src/Main.s
+	@echo ... src/NetworkSystem.obj
+	@echo ... src/NetworkSystem.i
+	@echo ... src/NetworkSystem.s
 	@echo ... src/cJSON.obj
 	@echo ... src/cJSON.i
 	@echo ... src/cJSON.s

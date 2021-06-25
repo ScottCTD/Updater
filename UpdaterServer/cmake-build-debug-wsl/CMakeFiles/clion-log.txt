@@ -1,4 +1,4 @@
-CMake executable is incorrect Configure Disable profile
-
-Cannot get compiler information:
-	Connection refused: connect
+/usr/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=/usr/bin/gcc -G "CodeBlocks - Unix Makefiles" /mnt/c/Scott/Code/Updater/UpdaterServer
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /mnt/c/Scott/Code/Updater/UpdaterServer/cmake-build-debug-wsl

@@ -123,33 +123,6 @@ UpdaterServer/fast:
 	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/build
 .PHONY : UpdaterServer/fast
 
-src/ArrayList.o: src/ArrayList.c.o
-
-.PHONY : src/ArrayList.o
-
-# target to build an object file
-src/ArrayList.c.o:
-	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/ArrayList.c.o
-.PHONY : src/ArrayList.c.o
-
-src/ArrayList.i: src/ArrayList.c.i
-
-.PHONY : src/ArrayList.i
-
-# target to preprocess a source file
-src/ArrayList.c.i:
-	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/ArrayList.c.i
-.PHONY : src/ArrayList.c.i
-
-src/ArrayList.s: src/ArrayList.c.s
-
-.PHONY : src/ArrayList.s
-
-# target to generate assembly for a file
-src/ArrayList.c.s:
-	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/ArrayList.c.s
-.PHONY : src/ArrayList.c.s
-
 src/FileSystem.o: src/FileSystem.c.o
 
 .PHONY : src/FileSystem.o
@@ -240,9 +213,6 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... UpdaterServer"
-	@echo "... src/ArrayList.o"
-	@echo "... src/ArrayList.i"
-	@echo "... src/ArrayList.s"
 	@echo "... src/FileSystem.o"
 	@echo "... src/FileSystem.i"
 	@echo "... src/FileSystem.s"

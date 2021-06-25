@@ -18,20 +18,29 @@
 #include "dirent.h"
 #include "cJSON.h"
 
+
 /**
  * ==================================================================================
  *                                 LocalFile Starts
  * ==================================================================================
  */
-typedef struct {
+typedef struct LocalFile{
     bool isDirectory;
     size_t size;
     char *name;
     char *path;
     char *identifier;
+    struct LocalFile *prev;
+    struct LocalFile *next;
+    struct LocalFile *child;
 } LocalFile;
 
 LocalFile *newLocalFile(const char *path);
+
+void createLocalFileTree(LocalFile *startDir);
+
+LocalFile *searchLocalFileInFileTreeWithComparator(LocalFile *fileTreeStart, const void *element,
+                                                   int (*comparator)(const LocalFile *, const void *));
 
 void freeLocalFile(LocalFile *file);
 
@@ -86,6 +95,7 @@ int remoteFileComparator(const void *file01, const void *file02);
  */
 
 void mkdirs(const char *path);
+void deleteDirectory(char *pathToDir);
 
 /**
  * ==================================================================================

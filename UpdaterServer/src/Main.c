@@ -32,18 +32,19 @@ void stop(int status) {
 
 void createConfig() {
     serverConfig = cJSON_CreateObject();
-    cJSON *syncFilesArrayJson = cJSON_AddArrayToObject(serverConfig, "Sync Files / Directories");
-    cJSON_AddItemToArray(syncFilesArrayJson, cJSON_CreateString("resources/exampleDir"));
+    cJSON_AddArrayToObject(serverConfig, "Sync Directories");
+    cJSON_AddArrayToObject(serverConfig, "Sync Files");
     cJSON_AddArrayToObject(serverConfig, "Whitelist");
+    FILE *file = fopen("config.json", "wb");
+    char *defaultConfigString = cJSON_Print(serverConfig);
+    fwrite(defaultConfigString, 1, strlen(defaultConfigString), file);
+    fclose(file);
+    free(defaultConfigString);
 }
 void initConfig() {
     printf("Initializing config!\n");
     if (access("config.json", F_OK) != 0) {
-        FILE *file = fopen("config.json", "wb");
         createConfig();
-        char *defaultConfigString = cJSON_Print(serverConfig);
-        fwrite(defaultConfigString, 1, strlen(defaultConfigString), file);
-        fclose(file);
     }
     FILE *file = fopen("config.json", "rb");
     if (file == NULL) {
@@ -54,6 +55,10 @@ void initConfig() {
     fread(buffer, 1, BUFFER_SIZE, file);
     fclose(file);
     serverConfig = cJSON_Parse(buffer);
+    if (serverConfig == NULL) {
+        createConfig();
+    }
+    // TODO Remove it, the return value of cJSON_Print needs to be freed.
     printf("%s\n", cJSON_Print(serverConfig));
 }
 
@@ -94,21 +99,35 @@ void initData() {
             exit(-1);
         }
     }
+    char path[BUFFER_SIZE] = "resources/";
     cJSON *temp = NULL;
-    cJSON_ArrayForEach(temp, cJSON_GetObjectItemCaseSensitive(serverConfig, "Sync Files / Directories")) {
-        char *path = cJSON_GetStringValue(temp);
+    // Scan configured sync directories.
+    cJSON_ArrayForEach(temp, cJSON_GetObjectItemCaseSensitive(serverConfig, "Sync Directories")) {
+        char *rawPath = cJSON_GetStringValue(temp);
+        memset(path + 10, 0, BUFFER_SIZE - 10);
+        strcat(path, rawPath);
         LocalFile *file = newLocalFile(path);
         if (file == NULL) {
             printf("%s does not exist!\n", path);
             stop(-1);
         } else {
-            if (file->isDirectory) {
-                scanDirectory(file, serverDirArrayJson, serverFileArrayJson);
-            } else {
-                cJSON_AddItemToArray(serverFileArrayJson, localFileToJson(file));
-            }
+            scanDirectory(file, serverDirArrayJson, serverFileArrayJson);
         }
     }
+    // Scan configured sync files.
+    cJSON_ArrayForEach(temp, cJSON_GetObjectItemCaseSensitive(serverConfig, "Sync Files")) {
+        char *rawPath = cJSON_GetStringValue(temp);
+        memset(path + 10, 0, BUFFER_SIZE - 10);
+        strcat(path, rawPath);
+        LocalFile *file = newLocalFile(path);
+        if (file == NULL) {
+            printf("%s does not exist!\n", path);
+            stop(-1);
+        } else {
+            cJSON_AddItemToArray(serverFileArrayJson, localFileToJson(file));
+        }
+    }
+    // TODO Remove it
     printf("%s\n", cJSON_Print(serverJson));
 }
 
@@ -178,7 +197,6 @@ ssize_t sendSize(int socket, size_t data) {
 ssize_t sendString(int socket, const char *data) {
     return send(socket, data, strlen(data), 0);
 }
-
 bool recvBoolean(int socket) {
     bool buffer;
     recv(socket, &buffer, 1, 0);
