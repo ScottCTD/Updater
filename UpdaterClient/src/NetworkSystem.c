@@ -35,10 +35,15 @@ void downloadFileFromServer(SOCKET serverSocket, char *serverFilePath, char *cli
         size_t size = recvSize(serverSocket);
         size_t bytes, total = 0;
         FILE *file = fopen(clientFilePath, "wb");
+        time_t before = time(NULL);
         while (total < size && (bytes = recv(serverSocket, buffer, BUFFER_SIZE, 0)) > 0) {
             fwrite(buffer, 1, bytes, file);
             total += bytes;
+            double percent = (double) total / (double) size * 100;
+            printf("\rProgress: %.2f", percent);
         }
+        time_t after = time(NULL);
+        printf(" Time: %lld s", after - before);
     }
 }
 

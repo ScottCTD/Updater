@@ -4,18 +4,15 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
 #include <stdbool.h>
 #include <threads.h>
 #include <dirent.h>
 
 #include "cJSON.h"
 #include "FileSystem.h"
+#include "NetworkSystem.h"
 
 #define PORT (30001)
-#define BACKLOG (20)
 #define BUFFER_SIZE (8192)
 #define RESOURCE_FOLDER "resources"
 
@@ -42,13 +39,13 @@ void createConfig() {
     free(defaultConfigString);
 }
 void initConfig() {
-    printf("Initializing config!\n");
+    printf("Initializing config...\n");
     if (access("config.json", F_OK) != 0) {
         createConfig();
     }
     FILE *file = fopen("config.json", "rb");
     if (file == NULL) {
-        printf("Failed to read config file Config.json!\n");
+        printf("Failed to open config file Config.json!\n");
         return;
     }
     char buffer[BUFFER_SIZE];
@@ -60,6 +57,7 @@ void initConfig() {
     }
     // TODO Remove it, the return value of cJSON_Print needs to be freed.
     printf("%s\n", cJSON_Print(serverConfig));
+    printf("Success!\n");
 }
 
 void scanDirectory(LocalFile *directory, cJSON *directoriesArray, cJSON *filesArray) {
@@ -87,7 +85,7 @@ void scanDirectory(LocalFile *directory, cJSON *directoriesArray, cJSON *filesAr
     closedir(dir);
 }
 void initData() {
-    printf("Initializing server data!\n");
+    printf("Initializing server data...\n");
     serverJson = cJSON_CreateObject();
     cJSON *serverDirArrayJson = cJSON_AddArrayToObject(serverJson, "Directories");
     cJSON *serverFileArrayJson = cJSON_AddArrayToObject(serverJson, "Files");
@@ -129,86 +127,7 @@ void initData() {
     }
     // TODO Remove it
     printf("%s\n", cJSON_Print(serverJson));
-}
-
-int initSocket() {
-    int value;
-    // Get our host address info.
-    struct addrinfo hints, *serverInfo;
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
-    char port[6];
-    sprintf(port, "%d", htons(PORT));
-    if ((value = getaddrinfo(NULL, port, &hints, &serverInfo)) != 0) {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(value));
-        return -1;
-    }
-
-    // Create and bind our server socket file descriptor.
-    for (struct addrinfo *i = serverInfo; i != NULL; i = i->ai_next) {
-        if ((serverSocket = socket(i->ai_family, i->ai_socktype, i->ai_protocol)) == -1) {
-            perror("socket");
-            continue;
-        }
-        if (bind(serverSocket, i->ai_addr, i->ai_addrlen) == -1) {
-            close(serverSocket);
-            perror("bind");
-            continue;
-        }
-        break;
-    }
-    struct sockaddr_in *serverAddress = (struct sockaddr_in *) serverInfo->ai_addr;
-    freeaddrinfo(serverInfo);
-
-    // Listen for incoming client
-    if (listen(serverSocket, BACKLOG) == -1) {
-        perror("listen");
-        return -1;
-    }
-    printf("Server start listening for clients on port %d!\n", serverAddress->sin_port);
-    return 0;
-}
-int acceptClient() {
-    // Accept the client.
-    struct sockaddr_storage clientAddr;
-    socklen_t clientAddrLen = sizeof clientAddr;
-    int clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &clientAddrLen);
-    if (clientSocket == -1) {
-        perror("accept");
-        return -1;
-    }
-    char clientIP[INET_ADDRSTRLEN];
-    inet_ntop(clientAddr.ss_family, &((struct sockaddr_in *) &clientAddr)->sin_addr, clientIP, sizeof clientIP);
-    printf("Client %s:%d connected!\n", clientIP, ((struct sockaddr_in *) &clientAddr)->sin_port);
-    return clientSocket;
-}
-
-bool sendBoolean(int socket, bool boolean) {
-    return send(socket, &boolean, sizeof(bool), 0);
-}
-ssize_t sendInt(int socket, int data) {
-    return send(socket, &data, sizeof(int), 0);
-}
-ssize_t sendSize(int socket, size_t data) {
-    return send(socket, &data, sizeof(size_t), 0);
-}
-ssize_t sendString(int socket, const char *data) {
-    return send(socket, data, strlen(data), 0);
-}
-bool recvBoolean(int socket) {
-    bool buffer;
-    recv(socket, &buffer, 1, 0);
-    return buffer;
-}
-int recvInt(int socket) {
-    int buffer;
-    recv(socket, &buffer, sizeof buffer, 0);
-    return buffer;
-}
-ssize_t recvString(int socket, char *buffer, size_t size) {
-    return recv(socket, buffer, size, 0);
+    printf("Success!\n");
 }
 
 int asynHandleInput(void *arg) {
@@ -221,6 +140,7 @@ int asynHandleInput(void *arg) {
         if (strcmp("update", buffer) == 0) {
             initConfig();
             initData();
+            printf("Success!\n");
         }
     }
 }
@@ -277,9 +197,8 @@ int main() {
     printf("Starting Server...\n");
     initConfig();
     initData();
-    int result;
-    if ((result = initSocket()) != 0) {
-        return result;
+    if ((serverSocket = initSocketOnServer(PORT)) < 0) {
+        return serverSocket;
     }
 
     thrd_t inputThread;
@@ -287,7 +206,7 @@ int main() {
     thrd_detach(inputThread);
 
     while (true) {
-        int clientSocket = acceptClient();
+        int clientSocket = acceptClient(serverSocket);
         if (clientSocket == -1) {
             continue;
         }

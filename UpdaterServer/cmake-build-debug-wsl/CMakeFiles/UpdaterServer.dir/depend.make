@@ -7,7 +7,11 @@ CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o: ../src/cJSON.h
 
 CMakeFiles/UpdaterServer.dir/src/Main.c.o: ../src/FileSystem.h
 CMakeFiles/UpdaterServer.dir/src/Main.c.o: ../src/Main.c
+CMakeFiles/UpdaterServer.dir/src/Main.c.o: ../src/NetworkSystem.h
 CMakeFiles/UpdaterServer.dir/src/Main.c.o: ../src/cJSON.h
+
+CMakeFiles/UpdaterServer.dir/src/NetworkSystem.c.o: ../src/NetworkSystem.c
+CMakeFiles/UpdaterServer.dir/src/NetworkSystem.c.o: ../src/NetworkSystem.h
 
 CMakeFiles/UpdaterServer.dir/src/cJSON.c.o: ../src/cJSON.c
 CMakeFiles/UpdaterServer.dir/src/cJSON.c.o: ../src/cJSON.h

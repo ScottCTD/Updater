@@ -7,6 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY build/)
 add_executable(UpdaterServer
         src/cJSON.h src/cJSON.c
         src/FileSystem.h src/FileSystem.c
+        src/NetworkSystem.h src/NetworkSystem.c
         src/Main.c
 )
 

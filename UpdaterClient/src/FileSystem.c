@@ -224,6 +224,19 @@ void deleteDirectory(char *pathToDir) {
     rmdir(pathToDir);
 }
 
+char *UTF8ToGBK(char *utf8String) {
+    // Map UTF8 string to Unicode
+    int bufferSize = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, NULL, 0);
+    wchar_t buffer[bufferSize];
+    wmemset(buffer, 0, bufferSize);
+    MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, buffer, bufferSize);
+    // Map Unicode string to GBK string
+    bufferSize = WideCharToMultiByte(CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL);
+    char *result = calloc(bufferSize, 1);
+    WideCharToMultiByte(CP_ACP, 0, buffer, -1, result, bufferSize, NULL, NULL);
+    return result;
+}
+
 /**
  * ==================================================================================
  *                            Utility Functions End

@@ -177,6 +177,33 @@ src/Main.c.s:
 	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/Main.c.s
 .PHONY : src/Main.c.s
 
+src/NetworkSystem.o: src/NetworkSystem.c.o
+
+.PHONY : src/NetworkSystem.o
+
+# target to build an object file
+src/NetworkSystem.c.o:
+	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/NetworkSystem.c.o
+.PHONY : src/NetworkSystem.c.o
+
+src/NetworkSystem.i: src/NetworkSystem.c.i
+
+.PHONY : src/NetworkSystem.i
+
+# target to preprocess a source file
+src/NetworkSystem.c.i:
+	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/NetworkSystem.c.i
+.PHONY : src/NetworkSystem.c.i
+
+src/NetworkSystem.s: src/NetworkSystem.c.s
+
+.PHONY : src/NetworkSystem.s
+
+# target to generate assembly for a file
+src/NetworkSystem.c.s:
+	$(MAKE) -f CMakeFiles/UpdaterServer.dir/build.make CMakeFiles/UpdaterServer.dir/src/NetworkSystem.c.s
+.PHONY : src/NetworkSystem.c.s
+
 src/cJSON.o: src/cJSON.c.o
 
 .PHONY : src/cJSON.o
@@ -219,6 +246,9 @@ help:
 	@echo "... src/Main.o"
 	@echo "... src/Main.i"
 	@echo "... src/Main.s"
+	@echo "... src/NetworkSystem.o"
+	@echo "... src/NetworkSystem.i"
+	@echo "... src/NetworkSystem.s"
 	@echo "... src/cJSON.o"
 	@echo "... src/cJSON.i"
 	@echo "... src/cJSON.s"

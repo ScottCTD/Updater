@@ -6,6 +6,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_CHECK_C
   "/mnt/c/Scott/Code/Updater/UpdaterServer/src/FileSystem.c" "/mnt/c/Scott/Code/Updater/UpdaterServer/cmake-build-debug-wsl/CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o"
   "/mnt/c/Scott/Code/Updater/UpdaterServer/src/Main.c" "/mnt/c/Scott/Code/Updater/UpdaterServer/cmake-build-debug-wsl/CMakeFiles/UpdaterServer.dir/src/Main.c.o"
+  "/mnt/c/Scott/Code/Updater/UpdaterServer/src/NetworkSystem.c" "/mnt/c/Scott/Code/Updater/UpdaterServer/cmake-build-debug-wsl/CMakeFiles/UpdaterServer.dir/src/NetworkSystem.c.o"
   "/mnt/c/Scott/Code/Updater/UpdaterServer/src/cJSON.c" "/mnt/c/Scott/Code/Updater/UpdaterServer/cmake-build-debug-wsl/CMakeFiles/UpdaterServer.dir/src/cJSON.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")

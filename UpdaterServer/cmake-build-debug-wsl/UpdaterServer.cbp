@@ -85,6 +85,12 @@
 		<Unit filename="/mnt/c/Scott/Code/Updater/UpdaterServer/src/Main.c">
 			<Option target="UpdaterServer"/>
 		</Unit>
+		<Unit filename="/mnt/c/Scott/Code/Updater/UpdaterServer/src/NetworkSystem.c">
+			<Option target="UpdaterServer"/>
+		</Unit>
+		<Unit filename="/mnt/c/Scott/Code/Updater/UpdaterServer/src/NetworkSystem.h">
+			<Option target="UpdaterServer"/>
+		</Unit>
 		<Unit filename="/mnt/c/Scott/Code/Updater/UpdaterServer/src/cJSON.c">
 			<Option target="UpdaterServer"/>
 		</Unit>

@@ -8,7 +8,11 @@ CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o
 CMakeFiles/UpdaterServer.dir/src/Main.c.o
  /mnt/c/Scott/Code/Updater/UpdaterServer/src/FileSystem.h
  /mnt/c/Scott/Code/Updater/UpdaterServer/src/Main.c
+ /mnt/c/Scott/Code/Updater/UpdaterServer/src/NetworkSystem.h
  /mnt/c/Scott/Code/Updater/UpdaterServer/src/cJSON.h
+CMakeFiles/UpdaterServer.dir/src/NetworkSystem.c.o
+ /mnt/c/Scott/Code/Updater/UpdaterServer/src/NetworkSystem.c
+ /mnt/c/Scott/Code/Updater/UpdaterServer/src/NetworkSystem.h
 CMakeFiles/UpdaterServer.dir/src/cJSON.c.o
  /mnt/c/Scott/Code/Updater/UpdaterServer/src/cJSON.c
  /mnt/c/Scott/Code/Updater/UpdaterServer/src/cJSON.h

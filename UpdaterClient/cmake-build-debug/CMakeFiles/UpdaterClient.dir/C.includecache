@@ -6,10 +6,6 @@
 
 #IncludeRegexTransform: 
 
-C:/Scott/Code/Updater/UpdaterClient/src/FileSystem.c
-FileSystem.h
-C:/Scott/Code/Updater/UpdaterClient/src/FileSystem.h
-
 C:/Scott/Code/Updater/UpdaterClient/src/FileSystem.h
 stdio.h
 -
@@ -25,6 +21,34 @@ dirent.h
 C:/Scott/Code/Updater/UpdaterClient/src/dirent.h
 cJSON.h
 C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
+
+C:/Scott/Code/Updater/UpdaterClient/src/Main.c
+stdio.h
+-
+winsock2.h
+-
+windows.h
+-
+cJSON.h
+C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
+FileSystem.h
+C:/Scott/Code/Updater/UpdaterClient/src/FileSystem.h
+NetworkSystem.h
+C:/Scott/Code/Updater/UpdaterClient/src/NetworkSystem.h
+
+C:/Scott/Code/Updater/UpdaterClient/src/NetworkSystem.h
+winsock2.h
+-
+stdio.h
+-
+windows.h
+-
+ws2tcpip.h
+-
+stdbool.h
+-
+time.h
+-
 
 C:/Scott/Code/Updater/UpdaterClient/src/cJSON.h
 stddef.h

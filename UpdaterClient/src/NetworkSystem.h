@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 #include <stdbool.h>
+#include <time.h>
 
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE (8192)

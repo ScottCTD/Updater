@@ -1,1 +1,1 @@
-/usr/bin/gcc -g   CMakeFiles/UpdaterServer.dir/src/cJSON.c.o CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o CMakeFiles/UpdaterServer.dir/src/Main.c.o  -o build/UpdaterServer  -lpthread 
+/usr/bin/gcc -g   CMakeFiles/UpdaterServer.dir/src/cJSON.c.o CMakeFiles/UpdaterServer.dir/src/FileSystem.c.o CMakeFiles/UpdaterServer.dir/src/NetworkSystem.c.o CMakeFiles/UpdaterServer.dir/src/Main.c.o  -o build/UpdaterServer  -lpthread 

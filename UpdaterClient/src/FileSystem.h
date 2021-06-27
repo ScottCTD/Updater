@@ -96,6 +96,7 @@ int remoteFileComparator(const void *file01, const void *file02);
 
 void mkdirs(const char *path);
 void deleteDirectory(char *pathToDir);
+char *UTF8ToGBK(char *utf8String);
 
 /**
  * ==================================================================================

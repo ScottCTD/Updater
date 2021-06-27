@@ -94,21 +94,26 @@ int main() {
         printf("Failed to retrieve complete server config! Please retry later.\n");
         stop(-1);
     }
-    printf("Successfully retrieved server config!\n");
+    printf("Success!\n");
 
     // List all files in server
     sendString(serverSocket, "list");
     printf("Listing server files!\n");
     size = recvSize(serverSocket);
-    char serverDataString[size + 1];
-    memset(serverDataString, 0, size + 1);
-    recvString(serverSocket, size, serverDataString);
+    char serverDataStringRaw[size + 1];
+    memset(serverDataStringRaw, 0, size + 1);
+    recvString(serverSocket, size, serverDataStringRaw);
+    char *serverDataString = UTF8ToGBK(serverDataStringRaw);
     cJSON *serverDataJson = cJSON_Parse(serverDataString);
+    printf("%s\n", serverDataString);
+    free(serverDataString);
     if (serverDataJson == NULL) {
         printf("Failed to list server files! Please retry later.\n");
         stop(-1);
     }
-    printf("Successfully list server files!\n");
+    // TODO Remove it
+    printf("%s\n", cJSON_Print(serverDataJson));
+    printf("Success!\n");
 
     // Create missing dirs
     cJSON *serverTempJson = NULL;
@@ -121,7 +126,7 @@ int main() {
     cJSON_ArrayForEach(serverTempJson, serverDirJsonArray) {
         mkdirs(cJSON_GetStringValue(serverTempJson) + 10);
     }
-    printf("Successfully created missing directories!\n");
+    printf("Success!\n");
 
     // Scan local files based on sync directories and sync files.
     printf("Scanning local files and directories...\n");
@@ -139,26 +144,28 @@ int main() {
         }
         createLocalFileTree(dir);
     }
-    printf("Successfully collected local files and directories!\n");
+    printf("Success!\n");
 
     // Download missing files.
     printf("Downloading missing files...\n");
+    printf("");
     cJSON *serverFileJsonArray = cJSON_GetObjectItemCaseSensitive(serverDataJson, "Files");
     cJSON_ArrayForEach(serverTempJson, serverFileJsonArray) {
         char *serverFileIdentifier = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Identifier"));
         LocalFile *result = searchLocalFileInFileTreeWithComparator(clientDataHead, serverFileIdentifier, comparatorLocalFileIdentifier);
         if (result == NULL) {
             char *serverFilePath = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Path"));
-            printf("Downloading %s\n", serverFilePath);
+            printf("\rDownloading %s\n", serverFilePath);
             downloadFileFromServer(serverSocket, serverFilePath, serverFilePath + 10);
         }
     }
-    printf("Successfully downloaded all missing files!\n");
+    printf("\r");
+    printf("Success!\n");
 
     // Delete other files and directories.
     printf("Deleting extra files and directories...\n");
     deleteExtraLocalFiles(clientDataHead, serverSyncDirJsonArray, serverDirJsonArray, serverFileJsonArray);
-    printf("Successfully deleted extra files and directories!\n");
+    printf("Success!\n");
 
     cJSON_Delete(serverConfigJson);
     cJSON_Delete(serverDataJson);
