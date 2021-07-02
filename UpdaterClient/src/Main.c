@@ -154,9 +154,11 @@ int main() {
         char *serverFileIdentifier = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Identifier"));
         LocalFile *result = searchLocalFileInFileTreeWithComparator(clientDataHead, serverFileIdentifier, comparatorLocalFileIdentifier);
         if (result == NULL) {
-            char *serverFilePath = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Path"));
-            printf("\rDownloading %s\n", serverFilePath);
-            downloadFileFromServer(serverSocket, serverFilePath, serverFilePath + 10);
+            char *serverFilePathGBK = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(serverTempJson, "Path"));
+            char *serverFilePath = GBKToUTF8(serverFilePathGBK);
+            printf("\rDownloading %s\n", serverFilePathGBK);
+            downloadFileFromServer(serverSocket, serverFilePath, serverFilePathGBK + 10);
+            free(serverFilePath);
         }
     }
     printf("\r");

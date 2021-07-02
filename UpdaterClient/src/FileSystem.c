@@ -87,18 +87,21 @@ void createLocalFileTree(LocalFile *startDir) {
     if (!startDir->isDirectory) {
         return;
     }
-    DIR *dir = opendir(startDir->path);
-    struct dirent *entry = NULL;
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(".", entry->d_name) == 0 ||
-            strcmp("..", entry->d_name) == 0) {
+    char path[BUFFER_SIZE];
+    strcpy(path, startDir->path);
+    strcat(path, "\\*");
+    WIN32_FIND_DATA entry;
+    HANDLE handle;
+    handle = FindFirstFile(path, &entry);
+    do {
+        if (strcmp(".", entry.cFileName) == 0 ||
+            strcmp("..", entry.cFileName) == 0) {
             continue;
         }
-        char path[BUFFER_SIZE];
-        memset(path, 0, 256);
+        memset(path, 0, BUFFER_SIZE);
         strcat(path, startDir->path);
         strcat(path, "/");
-        strcat(path, entry->d_name);
+        strcat(path, entry.cFileName);
         LocalFile *file = newLocalFile(path);
         if (startDir->child == NULL) {
             startDir->child = file;
@@ -111,8 +114,7 @@ void createLocalFileTree(LocalFile *startDir) {
         if (file->isDirectory) {
             createLocalFileTree(file);
         }
-    }
-    closedir(dir);
+    } while (FindNextFile(handle, &entry));
 }
 
 void freeLocalFile(LocalFile *file) {
@@ -224,7 +226,7 @@ void deleteDirectory(char *pathToDir) {
     rmdir(pathToDir);
 }
 
-char *UTF8ToGBK(char *utf8String) {
+char *UTF8ToGBK(const char *utf8String) {
     // Map UTF8 string to Unicode
     int bufferSize = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, NULL, 0);
     wchar_t buffer[bufferSize];
@@ -234,6 +236,17 @@ char *UTF8ToGBK(char *utf8String) {
     bufferSize = WideCharToMultiByte(CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL);
     char *result = calloc(bufferSize, 1);
     WideCharToMultiByte(CP_ACP, 0, buffer, -1, result, bufferSize, NULL, NULL);
+    return result;
+}
+
+char *GBKToUTF8(const char *gbkString) {
+    int bufferSize = MultiByteToWideChar(CP_ACP, 0, gbkString, -1, NULL, 0);
+    wchar_t buffer[bufferSize];
+    wmemset(buffer, 0, bufferSize);
+    MultiByteToWideChar(CP_ACP, 0, gbkString, -1, buffer, bufferSize);
+    bufferSize = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, NULL, 0, NULL, NULL);
+    char *result = calloc(bufferSize, 1);
+    WideCharToMultiByte(CP_UTF8, 0, buffer, -1, result, bufferSize, NULL, NULL);
     return result;
 }
 
